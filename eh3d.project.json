@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "ecosystem": "EH3D",
+  "name": "EH3D-LASER-CAM",
+  "version": "0.0.1",
+  "role": "tool",
+  "stack": "rust",
+  "technologies": [
+    "Rust",
+    "G-code",
+    "PNG",
+    "dithering"
+  ],
+  "deployment_target": "user-pc",
+  "maturity": "scaffolding",
+  "evidence": "host-test",
+  "hardware_bound": false,
+  "family": "CNC Workflow Tools",
+  "parent": null,
+  "build": "cargo build --release; cargo test",
+  "notes": "Scaffolding v0.0.1: a library and a command line that read a PNG or PGM image, turn it into dots (threshold, Floyd-Steinberg or Atkinson dithering) and write the G-code of a laser that burns line by line with M4 dynamic power, S0 while it travels, an overscan worked out from the acceleration and alternating directions, plus a power-against-feed calibration grid. No window, no vector cutting and nothing has been tried on a laser.",
+  "native_version": {
+    "file": "Cargo.toml",
+    "pattern": "^version\\s*=\\s*\"(\\d+\\.\\d+\\.\\d+)\""
+  }
+}

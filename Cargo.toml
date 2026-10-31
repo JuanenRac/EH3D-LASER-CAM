@@ -1,0 +1,24 @@
+[package]
+name = "eh3d-laser-cam"
+version = "0.0.1"
+edition = "2021"
+rust-version = "1.75"
+description = "Laser engraving from an image: dithering (threshold, Floyd-Steinberg, Atkinson), raster G-code with dynamic power and overscan, and a power-against-feed calibration grid"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/JuanenRac/EH3D-LASER-CAM"
+readme = "README.md"
+
+[lib]
+name = "eh3d_laser_cam"
+path = "src/lib.rs"
+
+[[bin]]
+name = "eh3d-lasercam"
+path = "src/main.rs"
+
+[dependencies]
+png = "0.17"
+
+[profile.release]
+opt-level = 3
+lto = true

@@ -1,0 +1,131 @@
+{
+  "repo": "EH3D-LASER-CAM",
+  "ecosystem": "eh3d",
+  "tagline": "An image, dots, and the G-code of a laser.",
+  "description": "EH3D-LASER-CAM is a Rust library and command line that turn an image into dots by dithering and write the G-code of a laser that burns line by line with dynamic power. It has no window yet.",
+  "columns": [
+    "WHO USES IT",
+    "THIS REPOSITORY",
+    "WHAT IT DEPENDS ON"
+  ],
+  "nodes": [
+    {
+      "id": "person",
+      "column": 0,
+      "level": "external",
+      "title": "A person",
+      "lines": [
+        "has an image and a laser",
+        "and a material to try"
+      ]
+    },
+    {
+      "id": "motion",
+      "column": 0,
+      "level": "config",
+      "title": "Machine control",
+      "lines": [
+        "planned: the file goes to",
+        "MOTIONCNC or the debugger"
+      ]
+    },
+    {
+      "id": "image",
+      "column": 1,
+      "level": "tested",
+      "title": "image and dither",
+      "lines": [
+        "PNG and PGM to grey levels,",
+        "then to dots"
+      ],
+      "code": [
+        "src/image.rs::pub fn from_bytes",
+        "src/dither.rs::pub fn dither"
+      ]
+    },
+    {
+      "id": "raster",
+      "column": 1,
+      "level": "tested",
+      "title": "raster",
+      "lines": [
+        "G-code with dynamic power,",
+        "overscan and alternating",
+        "directions"
+      ],
+      "code": [
+        "src/raster.rs::pub fn engrave"
+      ]
+    },
+    {
+      "id": "cal",
+      "column": 1,
+      "level": "tested",
+      "title": "calibrate",
+      "lines": [
+        "power against feed grid"
+      ],
+      "code": [
+        "src/calibrate.rs::pub fn grid"
+      ]
+    },
+    {
+      "id": "png",
+      "column": 2,
+      "level": "external",
+      "title": "png",
+      "lines": [
+        "the PNG decoder, the only",
+        "dependency"
+      ],
+      "code": [
+        "Cargo.toml::png"
+      ]
+    },
+    {
+      "id": "laser",
+      "column": 2,
+      "level": "external",
+      "title": "A GRBL laser",
+      "lines": [
+        "runs the file; nothing here",
+        "has run on one"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "person",
+      "to": "image",
+      "label": "engrave",
+      "level": "tested"
+    },
+    {
+      "from": "person",
+      "to": "cal",
+      "level": "tested"
+    },
+    {
+      "from": "motion",
+      "to": "raster",
+      "label": "planned",
+      "level": "config"
+    },
+    {
+      "from": "image",
+      "to": "png",
+      "level": "tested"
+    },
+    {
+      "from": "raster",
+      "to": "laser",
+      "level": "tested"
+    }
+  ],
+  "legend": {
+    "tested": "covered by tests on a computer (18 tests)",
+    "config": "planned, not used today",
+    "external": "a person, a file or another repository"
+  },
+  "footer": "No laser has burned anything with this yet."
+}
