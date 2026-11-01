@@ -12,6 +12,8 @@ if not defined PRETTY_RUN if exist "%~dp0tools\pretty_run.py" (
 rem PRETTY_RUN_END
 rem Builds EH3D-LASER-CAM (release).
 cd /d "%~dp0"
+set "TARGET_DIR=target"
+if defined CARGO_TARGET_DIR set "TARGET_DIR=%CARGO_TARGET_DIR%"
 where cargo >nul 2>nul
 if errorlevel 1 (
     echo Rust is not installed. Get it from https://rustup.rs
@@ -23,7 +25,7 @@ if errorlevel 1 (
     echo Build FAILED.
 ) else (
     echo.
-    echo Build OK: target\release\eh3d-lasercam.exe
+    echo Build OK: %TARGET_DIR%\release\eh3d-lasercam.exe
 )
 :end
 if not defined NOPAUSE pause
