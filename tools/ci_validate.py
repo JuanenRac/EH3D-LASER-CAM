@@ -176,6 +176,24 @@ def _status_lights_ci(root: Path) -> list[str]:
     return lights_tool.run_in_ci(root)
 
 
+
+def _depends_on_problems(root: Path, manifest: dict) -> list[str]:
+    """The sibling repositories that a Cargo.toml reaches with a path are the ones the manifest names in depends_on (schema 1.1)."""
+    found: set[str] = set()
+    for cargo in root.rglob("Cargo.toml"):
+        if any(part in ("target", ".git", "node_modules") for part in cargo.parts):
+            continue
+        found.update(re.findall(r'path\s*=\s*"(?:\.\./)+(EH3D-[A-Za-z0-9-]+)', cargo.read_text(encoding="utf-8")))
+    found.discard(manifest.get("name"))
+    declared = set(manifest.get("depends_on") or [])
+    out = []
+    if found != declared:
+        out.append(f"depends_on {sorted(declared)} does not match the sibling repositories that Cargo.toml reaches by path {sorted(found)}")
+    if declared and manifest.get("schema_version") != "1.1":
+        out.append("depends_on needs schema_version 1.1")
+    return out
+
+
 def main() -> int:
     problems: list[str] = []
     manifest = json.loads((ROOT / "eh3d.project.json").read_text(encoding="utf-8"))
@@ -226,6 +244,7 @@ def main() -> int:
     problems.extend(tree_problems())
     problems.extend(_universal_readme_ci(ROOT))
     problems.extend(_status_lights_ci(ROOT))
+    problems.extend(_depends_on_problems(ROOT, manifest))
     if problems:
         for problem in problems:
             print("  FAIL", problem)
