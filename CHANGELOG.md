@@ -4,6 +4,7 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **Strict command line:** an option that is written wrong (`--powr`) or a word too many is an error that names it; before, it was ignored and the output was made with the default values.
 - **A dot size that makes no sense is refused before anything is reserved:** `--dot-mm 0` or a tiny one, or an image that would be larger than the limit, gives an error instead of an allocation failure or an overflow.
 
 ## [0.0.1] - An image engraved by a laser: dithering, raster G-code with dynamic power and a calibration grid

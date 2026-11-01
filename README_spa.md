@@ -18,7 +18,7 @@
 
 ---
 
-**Comprobación de honestidad - lo que funciona hoy:** una biblioteca Rust y un programa de línea de comandos (`eh3d-lasercam`) con 18 pruebas que se ejecutan en un ordenador: convierte una imagen en puntos por tramado y escribe el G-code de un láser que quema línea a línea con potencia dinámica y sobrerrecorrido, y una rejilla de prueba de potencia contra avance. Todavía no tiene ventana, no se ha probado en una máquina y no se ha comprobado con una colección de ficheros reales.
+**Comprobación de honestidad - lo que funciona hoy:** una biblioteca Rust y un programa de línea de comandos (`eh3d-lasercam`) con 22 pruebas que se ejecutan en un ordenador: convierte una imagen en puntos por tramado y escribe el G-code de un láser que quema línea a línea con potencia dinámica y sobrerrecorrido, y una rejilla de prueba de potencia contra avance. Todavía no tiene ventana, no se ha probado en una máquina y no se ha comprobado con una colección de ficheros reales.
 
 ---
 
@@ -31,7 +31,7 @@
 |---|---|
 | Versión | `0.0.1` |
 | Madurez | Andamiaje |
-| Pruebas | 18 |
+| Pruebas | 22 |
 | Pila tecnológica | Rust |
 | En hardware real | No probado: nada de esto se ha ejecutado en una máquina |
 
@@ -47,7 +47,7 @@ Cada línea es una parte de este repositorio y la luz dice hasta dónde llega ho
 |---|---|---|
 | Núcleo | 🟡 | convierte una imagen en puntos por tramado y escribe el G-code de un láser que quema línea a línea con potencia dinámica y sobrerrecorrido, y una rejilla de prueba de potencia contra avance; probado en un ordenador con entradas normales y dañadas, no con una colección de ficheros reales. |
 | Línea de comandos | 🟡 | `eh3d-lasercam` ejecuta las mismas funciones que la biblioteca e imprime el resultado; cada error vuelve como mensaje y un código de salida distinto de cero. |
-| Pruebas | 🟡 | 18 pruebas pasan (`cargo test`), con casos normales, casos límite y entradas dañadas. |
+| Pruebas | 🟡 | 22 pruebas pasan (`cargo test`), con casos normales, casos límite y entradas dañadas. |
 | Seguridad | 🟡 | Rust seguro y simple (`forbid(unsafe_code)`): nada entra en pánico con los ficheros recibidos y un valor malo es un error con su motivo; sin revisión independiente. |
 | Ventana | 🔴 | Previsto: la ventana egui común a la suite; hoy solo existe la línea de comandos. |
 | Hardware real | 🔴 | No probado: nada de esto se ha ejecutado en una máquina. |
@@ -75,6 +75,7 @@ Cómo encajan las partes de este repositorio: quién lo usa, qué contiene y de 
 ## ✨ Funciones
 
 * **Biblioteca y línea de comandos:** cada orden de `eh3d-lasercam` es una función de la biblioteca, así que otro programa de la suite puede llamarla sin lanzar un proceso.
+* **Línea de comandos estricta:** una opción mal escrita (`--powr`) o una palabra de más es un error que la nombra, no algo que se ignora; si no, el programa haría su salida con los valores por defecto.
 * **Pruebas con entradas dañadas:** las pruebas también dan ficheros vacíos, basura, números enormes y ficheros cortados, y ninguna puede provocar un pánico.
 * **Sin adivinar:** un valor que no tiene sentido es un error que dice cuál y por qué, nunca un resultado que solo lo parece.
 * **Sin código unsafe:** `#![forbid(unsafe_code)]` en la biblioteca y el programa.
@@ -103,7 +104,8 @@ EH3D-LASER-CAM/
 │   ├── main.rs                                  la línea de comandos
 │   └── raster.rs                                una parte de la lógica
 ├── tests/
-│   └── laser.rs                                 pruebas de la biblioteca y la línea de comandos
+│   ├── laser.rs                                 pruebas de la biblioteca y la línea de comandos
+│   └── strict.rs                                pruebas de la línea de comandos: opciones y palabras que no conoce
 ├── examples/
 │   └── gradient.pgm                             una muestra para probar el programa
 ├── docs/
@@ -135,7 +137,7 @@ cargo run --release -- engrave examples/gradient.pgm examples/gradient.nc --widt
 
 ## 🧪 Pruebas
 
-El conjunto tiene 18 pruebas (`cargo test`, ejecutadas en Windows y Linux en el CI). Comprueban los casos normales, los casos límite y las entradas dañadas: ficheros vacíos, basura y ficheros cortados nunca provocan un pánico. El CI ejecuta además `cargo fmt --check`, `cargo clippy` con las advertencias como errores y `python -I tools/ci_validate.py`.
+El conjunto tiene 22 pruebas (`cargo test`, ejecutadas en Windows y Linux en el CI). Comprueban los casos normales, los casos límite y las entradas dañadas: ficheros vacíos, basura y ficheros cortados nunca provocan un pánico. El CI ejecuta además `cargo fmt --check`, `cargo clippy` con las advertencias como errores y `python -I tools/ci_validate.py`.
 
 ## 🏗️ Compilación y publicación
 
@@ -152,11 +154,21 @@ La versión está en `Cargo.toml` y en `eh3d.project.json`; cada versión tiene 
 
 ```text
 EH3D-LASER-CAM/
-├── crates/
-│   ├── eh3d-parser-gerber/                      lector Gerber RS-274X
-│   ├── eh3d-parser-excellon/                    lector de ficheros de taladrado Excellon
-│   └── eh3d-parser-gcode/                       lector e intérprete modal de G-code
-├── docs/                                        READERS.md, lo que promete cada lector y lo que no hace, y los datos de las dos imágenes
+├── src/
+│   ├── calibrate.rs                             una parte de la lógica
+│   ├── dither.rs                                una parte de la lógica
+│   ├── image.rs                                 una parte de la lógica
+│   ├── lib.rs                                   la biblioteca: lo que usa cada orden
+│   ├── main.rs                                  la línea de comandos
+│   └── raster.rs                                una parte de la lógica
+├── tests/
+│   ├── laser.rs                                 pruebas de la biblioteca y la línea de comandos
+│   └── strict.rs                                pruebas de la línea de comandos: opciones y palabras que no conoce
+├── examples/
+│   └── gradient.pgm                             una muestra para probar el programa
+├── docs/
+│   ├── architecture.json                        datos de la imagen de Arquitectura
+│   └── structure.json                           datos de la imagen de Estructura
 ├── tools/                                       comprobación del CI y del README y herramientas de imágenes
 ├── images/                                      banner y las imágenes de Arquitectura y Estructura del repositorio
 ├── .github/                                     flujos de CI y de publicación, plantillas de issues y pull requests

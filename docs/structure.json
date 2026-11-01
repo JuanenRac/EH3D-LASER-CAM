@@ -123,6 +123,19 @@
             "zh": "库和命令行的测试",
             "pt": "testes da biblioteca e da linha de comandos"
           }
+        },
+        {
+          "name": "strict.rs",
+          "desc": {
+            "en": "tests of the command line: options and words it does not know",
+            "es": "pruebas de la línea de comandos: opciones y palabras que no conoce",
+            "de": "Tests der Kommandozeile: Optionen und Wörter, die sie nicht kennt",
+            "fr": "tests de la ligne de commande : options et mots qu'elle ne connaît pas",
+            "it": "test della riga di comando: opzioni e parole che non conosce",
+            "ja": "コマンドラインのテスト：知らないオプションと語",
+            "zh": "命令行测试：它不认识的选项和词",
+            "pt": "testes da linha de comandos: opções e palavras que não conhece"
+          }
         }
       ]
     },

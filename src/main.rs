@@ -44,6 +44,18 @@ fn list(text: &str, what: &str) -> Result<Vec<f64>, String> {
     text.split(',').map(|p| num(p, what)).collect()
 }
 
+/// What is left of the arguments once the options and the wanted words are taken must be nothing more than `max` words: an option that is written wrong or an extra word is an
+/// error, not something to ignore (the program would then make its output with the default values).
+fn finish(args: &[String], max: usize) -> Result<(), String> {
+    if let Some(o) = args.iter().find(|a| a.starts_with("--")) {
+        return Err(format!("{o}: unknown option (see help)"));
+    }
+    if args.len() > max {
+        return Err(format!("{}: unexpected argument (see help)", args[max]));
+    }
+    Ok(())
+}
+
 fn run(mut args: Vec<String>) -> Result<(), String> {
     if args.is_empty() || matches!(args[0].as_str(), "help" | "--help" | "-h") {
         println!("{HELP}");
@@ -103,6 +115,7 @@ fn run(mut args: Vec<String>) -> Result<(), String> {
             if args.len() < 2 {
                 return Err("engrave needs an image and an output file".into());
             }
+            finish(&args, 2)?;
             let img = from_bytes(&fs::read(&args[0]).map_err(|e| format!("{}: {e}", args[0]))?)?;
             if !(width.is_finite() && width > 0.0 && width <= 2000.0) {
                 return Err("--width-mm must be from 0 to 2000".into());
@@ -129,12 +142,14 @@ fn run(mut args: Vec<String>) -> Result<(), String> {
             if let Some(v) = flag(&mut args, "--smax")? {
                 g.s_max = num(&v, "--smax")? as u32;
             }
+            finish(&args, 1)?;
             let out = args.first().ok_or("calibrate needs an output file")?;
             fs::write(out, grid(&powers, &feeds, &g)?).map_err(|e| format!("{out}: {e}"))?;
             println!("{} squares written to {out}", powers.len() * feeds.len());
             Ok(())
         }
         "info" => {
+            finish(&args, 1)?;
             let path = args.first().ok_or("info needs an image")?;
             let img = from_bytes(&fs::read(path).map_err(|e| format!("{path}: {e}"))?)?;
             let mean =
