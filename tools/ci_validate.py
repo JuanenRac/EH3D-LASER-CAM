@@ -4,6 +4,7 @@
 # Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 # GPL-3.0-or-later - see LICENSE
 # =============================================================================
+# canonical: EH3D-DOCS tools 1
 """The repository checks that CI runs besides cargo: manifest, versions, licence, changelog, the eight README files
 and the words that must never appear in public files. Prints CI_VALIDATION=PASS or FAIL with the reasons."""
 from __future__ import annotations
@@ -14,6 +15,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+TOOLS_VERSION = "1"  # raise it with every change of this file; the header of every copy says which one it holds
+DEFAULT_SKIP_DIRS = {"target", ".git"}  # folders the scan for forbidden words never enters; a repository adds its own in tools/ci_config.json
 REQUIRED = ["schema_version", "ecosystem", "name", "version", "role", "stack", "technologies", "deployment_target",
             "maturity", "family", "parent", "build", "notes", "native_version"]
 LANGUAGES = {"README.md": "en", "README_spa.md": "es", "README_deu.md": "de", "README_fra.md": "fr",
@@ -194,17 +197,97 @@ def _depends_on_problems(root: Path, manifest: dict) -> list[str]:
     return out
 
 
+def load_config(root: Path) -> tuple[dict, list[str]]:
+    """The data of this repository (tools/ci_config.json, optional): {"skip_dirs": [...]} adds folders the scan for forbidden words skips."""
+    path = root / "tools" / "ci_config.json"
+    if not path.is_file():
+        return {}, []
+    try:
+        config = json.loads(path.read_text(encoding="utf-8"))
+    except ValueError as error:
+        return {}, [f"tools/ci_config.json is not valid JSON: {error}"]
+    if not isinstance(config, dict):
+        return {}, ["tools/ci_config.json must hold an object"]
+    skip = config.get("skip_dirs", [])
+    if not isinstance(skip, list) or not all(isinstance(item, str) for item in skip):
+        return {}, ["tools/ci_config.json: skip_dirs must be a list of folder names"]
+    return config, []
+
+
+def skip_dirs(config: dict) -> set[str]:
+    return DEFAULT_SKIP_DIRS | set(config.get("skip_dirs", []))
+
+
+def header_version(text: str) -> str | None:
+    """The version in the `# canonical: EH3D-DOCS tools N` line of the header of a copy, or None when it has none."""
+    for line in text.replace("\r\n", "\n").split("\n"):
+        if not line.startswith("#"):
+            break
+        found = re.match(r"# canonical: EH3D-DOCS tools (\S+)\s*$", line)
+        if found:
+            return found.group(1)
+    return None
+
+
+def header_problems(path: Path | None = None) -> list[str]:
+    """The header of this file has to carry the same tools version as the code."""
+    path = path or Path(__file__).resolve()
+    stated = header_version(path.read_text(encoding="utf-8"))
+    if stated != TOOLS_VERSION:
+        return [f"{path.name} header says canonical tools {stated}, the code is {TOOLS_VERSION}: run tools/sync_shared_tools.py --write in EH3D-DOCS"]
+    return []
+
+
+def native_version(root: Path, native: dict) -> tuple[str, str]:
+    """The version the code of the repository declares, read where the manifest says (native_version.file and .pattern), and the name of that file.
+
+    The pattern can be one regex (its groups are joined with dots, empty ones left out) or an object with major/minor/patch(/build) regexes."""
+    name = native.get("file", "pyproject.toml")
+    try:
+        source = (root / name).read_text(encoding="utf-8", errors="replace")
+        pattern = native.get("pattern", r'(?m)^version\s*=\s*"([^"]+)"')
+        if isinstance(pattern, dict):
+            parts = []
+            for key in ("major", "minor", "patch", "build"):
+                if key in pattern and (found := re.search(pattern[key], source, re.MULTILINE)):
+                    parts.append(found.group(1))
+            return ".".join(parts) if len(parts) >= 3 else "?", name
+        match = re.search(pattern, source, re.MULTILINE)
+        return (".".join(group for group in match.groups() if group) if match else "?"), name
+    except (OSError, re.error):
+        return "?", name
+
+
+def project_yml_problems(root: Path, version: str) -> list[str]:
+    """An iOS project (project.yml): the marketing version is the one of the manifest and the bundle shows it, not a literal."""
+    path = root / "project.yml"
+    if not path.is_file():
+        return []
+    text = path.read_text(encoding="utf-8")
+    out = []
+    marketing = re.search(r'MARKETING_VERSION:\s*"([^"]+)"', text)
+    if not marketing or marketing.group(1) != version:
+        out.append(f"project.yml MARKETING_VERSION ({marketing.group(1) if marketing else 'none'}) is not the version {version}")
+    if 'CFBundleShortVersionString: "$(MARKETING_VERSION)"' not in text:
+        out.append("project.yml must give CFBundleShortVersionString as $(MARKETING_VERSION), not a literal")
+    return out
+
+
 def main() -> int:
-    problems: list[str] = []
+    problems: list[str] = header_problems()
+    config, config_problems = load_config(ROOT)
+    problems.extend(config_problems)
+    skipped = skip_dirs(config)
     manifest = json.loads((ROOT / "eh3d.project.json").read_text(encoding="utf-8"))
     for key in REQUIRED:
         if key not in manifest:
             problems.append(f"eh3d.project.json lacks '{key}'")
     version = manifest.get("version", "?")
-    cargo = (ROOT / "Cargo.toml").read_text(encoding="utf-8")
-    match = re.search(r'(?m)^version\s*=\s*"([^"]+)"', cargo)
-    if not match or match.group(1) != version:
-        problems.append(f"Cargo.toml version {match.group(1) if match else '?'} differs from the manifest {version}")
+    native = manifest.get("native_version", {})
+    found, native_file = native_version(ROOT, native if isinstance(native, dict) else {})
+    if found != version:
+        problems.append(f"{native_file} version {found} differs from the manifest {version}")
+    problems.extend(project_yml_problems(ROOT, version))
     if manifest.get("name") != ROOT.name and ROOT.name.startswith("EH3D"):
         problems.append(f"the manifest name {manifest.get('name')} differs from the folder {ROOT.name}")
     if "GNU GENERAL PUBLIC LICENSE" not in (ROOT / "LICENSE").read_text(encoding="utf-8", errors="replace")[:200]:
@@ -234,7 +317,7 @@ def main() -> int:
             if other != name and other not in text:
                 problems.append(f"{name} does not link to {other} in its language bar")
     for path in ROOT.rglob("*"):
-        if not path.is_file() or "target" in path.parts or ".git" in path.parts or path.suffix not in TEXT_SUFFIXES:
+        if not path.is_file() or skipped & set(path.relative_to(ROOT).parts) or path.suffix not in TEXT_SUFFIXES:
             continue
         if path.name == "ci_validate.py":
             continue
@@ -248,9 +331,9 @@ def main() -> int:
     if problems:
         for problem in problems:
             print("  FAIL", problem)
-        print(f"CI_VALIDATION=FAIL project={manifest.get('name')} version={version}")
+        print(f"CI_VALIDATION=FAIL project={manifest.get('name')} version={version} tools={TOOLS_VERSION}")
         return 1
-    print(f"CI_VALIDATION=PASS project={manifest.get('name')} version={version}")
+    print(f"CI_VALIDATION=PASS project={manifest.get('name')} version={version} tools={TOOLS_VERSION}")
     return 0
 
 
