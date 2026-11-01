@@ -408,3 +408,11 @@ fn the_calibration_grid_refuses_what_makes_no_sense() {
     )
     .is_err());
 }
+
+#[test]
+fn a_size_that_cannot_be_reserved_is_refused_before_it_is_reserved() {
+    let g = Gray::new(2, 1, vec![0, 255]).unwrap();
+    assert!(g.resize(usize::MAX, usize::MAX).is_err());
+    assert!(g.resize(2_000_000, 1_000_000).is_err());
+    assert!(g.resize(0, 0).is_ok(), "a side of 0 is a pixel");
+}

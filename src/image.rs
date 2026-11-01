@@ -34,9 +34,12 @@ impl Gray {
 
     /// The image scaled with a box filter to `w` x `h` pixels (used to make the pixel of the engraving as big as the dot of the laser).
     pub fn resize(&self, w: usize, h: usize) -> Result<Gray, String> {
-        let mut out = vec![0u8; w.max(1) * h.max(1)];
         let (w, h) = (w.max(1), h.max(1));
-        Gray::new(w, h, vec![0; w * h])?;
+        // the size is checked before anything is reserved: a dot far too small asks for terabytes
+        if w > MAX_SIDE || h > MAX_SIDE || !matches!(w.checked_mul(h), Some(n) if n <= MAX_PIXELS) {
+            return Err(format!("{w} x {h} pixels: each side must be from 1 to {MAX_SIDE} and the image at most {MAX_PIXELS} pixels"));
+        }
+        let mut out = vec![0u8; w * h];
         for y in 0..h {
             let (y0, y1) = (
                 y * self.h / h,

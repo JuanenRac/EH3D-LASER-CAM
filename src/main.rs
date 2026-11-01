@@ -107,6 +107,7 @@ fn run(mut args: Vec<String>) -> Result<(), String> {
             if !(width.is_finite() && width > 0.0 && width <= 2000.0) {
                 return Err("--width-mm must be from 0 to 2000".into());
             }
+            p.validate()?;
             let w = (width / p.pixel_mm).round().max(1.0) as usize;
             let h = ((w as f64) * img.h as f64 / img.w as f64).round().max(1.0) as usize;
             let dots = dither(&img.resize(w, h)?, method);
