@@ -224,15 +224,13 @@ def main() -> int:
             problems.append(f"{path.relative_to(ROOT)} mentions a word that must not appear in public files")
     problems.extend(hygiene_problems())
     problems.extend(tree_problems())
+    problems.extend(_universal_readme_ci(ROOT))
+    problems.extend(_status_lights_ci(ROOT))
     if problems:
         for problem in problems:
             print("  FAIL", problem)
         print(f"CI_VALIDATION=FAIL project={manifest.get('name')} version={version}")
         return 1
-    for _universal_problem in _universal_readme_ci(ROOT):
-        fail(_universal_problem)
-    for _lights_problem in _status_lights_ci(ROOT):
-        fail(_lights_problem)
     print(f"CI_VALIDATION=PASS project={manifest.get('name')} version={version}")
     return 0
 
