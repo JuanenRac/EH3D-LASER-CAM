@@ -1,6 +1,6 @@
 [package]
 name = "eh3d-laser-cam"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 rust-version = "1.75"
 description = "Laser engraving from an image: dithering (threshold, Floyd-Steinberg, Atkinson), raster G-code with dynamic power and overscan, and a power-against-feed calibration grid"
