@@ -18,7 +18,7 @@
 
 ---
 
-**Honesty check - what actually runs today:** a Rust library and a command line program (`eh3d-lasercam`) with 22 tests that run on a computer: turns an image into dots by dithering and writes the G-code of a laser that burns line by line with dynamic power and overscan, and a power-against-feed test grid. It has no window yet, it has not been tried on a machine and it has not been checked against a collection of real files.
+**Honesty check - what actually runs today:** a Rust library and a command line program (`eh3d-lasercam`) with 32 tests that run on a computer: turns an image into dots by dithering and writes the G-code of a laser that burns line by line with dynamic power and overscan, and a power-against-feed test grid. It has no window yet, it has not been tried on a machine and it has not been checked against a collection of real files.
 
 ---
 
@@ -31,7 +31,7 @@
 |---|---|
 | Version | `0.0.1` |
 | Maturity | Scaffolding |
-| Tests | 22 |
+| Tests | 32 |
 | Stack | Rust |
 | On real hardware | Not tried: nothing here has run on a machine |
 
@@ -47,7 +47,7 @@ Each line is one part of this repository and the light says how far it is today.
 |---|---|---|
 | Core | 🟡 | turns an image into dots by dithering and writes the G-code of a laser that burns line by line with dynamic power and overscan, and a power-against-feed test grid; tested on a computer with normal and damaged input, not with a collection of real files. |
 | Command line | 🟡 | `eh3d-lasercam` runs the same functions as the library and prints the result; every error comes back as a message and a non-zero exit code. |
-| Tests | 🟡 | 22 tests pass (`cargo test`), with normal cases, edge cases and damaged input. |
+| Tests | 🟡 | 32 tests pass (`cargo test`), with normal cases, edge cases and damaged input. |
 | Security | 🟡 | Plain safe Rust (`forbid(unsafe_code)`): nothing panics on the files it is given and a bad value is an error with its reason; no independent review. |
 | Window | 🔴 | Planned: the egui window common to the suite; today there is only the command line. |
 | Real hardware | 🔴 | Not tried: nothing here has been run on a machine. |
@@ -58,6 +58,7 @@ Each line is one part of this repository and the light says how far it is today.
 * **The image** (`src/image.rs`): PNG (grey, colour, transparent, 8 or 16 bits) and PGM (text and binary) become grey levels, with transparent parts as white and the size limited so that a hostile file cannot ask for gigabytes; `resize` averages the pixels so that one dot is as big as the beam.
 * **The dots** (`src/dither.rs`): a threshold, Floyd-Steinberg or Atkinson error diffusion; the tests check that the darkness of a grey is kept (a mid grey burns about half of the dots) and that white burns nothing and black burns everything.
 * **The laser** (`src/raster.rs`, `src/calibrate.rs`): one line after another, left to right and then right to left, `M4` with `S0` while it travels and the chosen power where it burns, an overscan fixed or worked out from the acceleration (v squared over 2a), and a grid of squares with a power for each column and a feed for each row to find what suits a material.
+* **`--dry-run`:** `engrave` works the result out and counts it (dots, lines, runs, burnt length, time) without writing the output file, which may then be left out.
 
 ## 🧩 Role in EH3D
 
@@ -97,14 +98,17 @@ The library is `eh3d_laser_cam` (`use eh3d_laser_cam::...`); the command line is
 ```text
 EH3D-LASER-CAM/
 ├── src/
-│   ├── calibrate.rs                             a part of the logic
-│   ├── dither.rs                                a part of the logic
-│   ├── image.rs                                 a part of the logic
 │   ├── lib.rs                                   the library: what every command uses
 │   ├── main.rs                                  the command line
+│   ├── calibrate.rs                             a part of the logic
+│   ├── cli_args.rs                              the arguments of the command line, the same file in every small utility
+│   ├── dither.rs                                a part of the logic
+│   ├── image.rs                                 a part of the logic
 │   └── raster.rs                                a part of the logic
 ├── tests/
+│   ├── dry_run.rs                               tests of --dry-run: it counts the same and writes nothing
 │   ├── laser.rs                                 tests of the library and the command line
+│   ├── readme.rs                                tests that run what the README and the run scripts promise
 │   └── strict.rs                                tests of the command line: options and words it does not know
 ├── examples/
 │   └── gradient.pgm                             a sample to try the program with
@@ -137,7 +141,7 @@ cargo run --release -- engrave examples/gradient.pgm examples/gradient.nc --widt
 
 ## 🧪 Testing
 
-The suite has 22 tests (`cargo test`, run on Windows and Linux in the CI). They check the normal cases, the edge cases and damaged input: empty files, garbage and cut files never panic. The CI also runs `cargo fmt --check`, `cargo clippy` with warnings as errors and `python -I tools/ci_validate.py`.
+The suite has 32 tests (`cargo test`, run on Windows and Linux in the CI). They check the normal cases, the edge cases and damaged input: empty files, garbage and cut files never panic. The CI also runs `cargo fmt --check`, `cargo clippy` with warnings as errors and `python -I tools/ci_validate.py`.
 
 ## 🏗️ Build & Release
 
@@ -155,14 +159,17 @@ The version lives in `Cargo.toml` and in `eh3d.project.json`; each version has i
 ```text
 EH3D-LASER-CAM/
 ├── src/
-│   ├── calibrate.rs                             a part of the logic
-│   ├── dither.rs                                a part of the logic
-│   ├── image.rs                                 a part of the logic
 │   ├── lib.rs                                   the library: what every command uses
 │   ├── main.rs                                  the command line
+│   ├── calibrate.rs                             a part of the logic
+│   ├── cli_args.rs                              the arguments of the command line, the same file in every small utility
+│   ├── dither.rs                                a part of the logic
+│   ├── image.rs                                 a part of the logic
 │   └── raster.rs                                a part of the logic
 ├── tests/
+│   ├── dry_run.rs                               tests of --dry-run: it counts the same and writes nothing
 │   ├── laser.rs                                 tests of the library and the command line
+│   ├── readme.rs                                tests that run what the README and the run scripts promise
 │   └── strict.rs                                tests of the command line: options and words it does not know
 ├── examples/
 │   └── gradient.pgm                             a sample to try the program with

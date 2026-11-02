@@ -18,7 +18,7 @@
 
 ---
 
-**诚实检查 - 当前真正能运行的内容：** 一个 Rust 库和一个命令行程序（`eh3d-lasercam`），有 22 个在电脑上运行的测试：通过抖动把图像变成点阵，写出逐行烧蚀、带动态功率和过扫的激光 G 代码，以及功率与进给测试网格。目前还没有窗口，没有在机器上试过，也没有用大量真实文件验证过。
+**诚实检查 - 当前真正能运行的内容：** 一个 Rust 库和一个命令行程序（`eh3d-lasercam`），有 32 个在电脑上运行的测试：通过抖动把图像变成点阵，写出逐行烧蚀、带动态功率和过扫的激光 G 代码，以及功率与进给测试网格。目前还没有窗口，没有在机器上试过，也没有用大量真实文件验证过。
 
 ---
 
@@ -31,7 +31,7 @@
 |---|---|
 | 版本 | `0.0.1` |
 | 成熟度 | 脚手架 |
-| 测试 | 22 |
+| 测试 | 32 |
 | 技术栈 | Rust |
 | 真实硬件 | 未试过：这里的任何内容都没有在机器上运行过 |
 
@@ -47,7 +47,7 @@
 |---|---|---|
 | 核心 | 🟡 | 通过抖动把图像变成点阵，写出逐行烧蚀、带动态功率和过扫的激光 G 代码，以及功率与进给测试网格；已在电脑上用正常和损坏的输入测试，未用大量真实文件验证。 |
 | 命令行 | 🟡 | `eh3d-lasercam` 运行与库相同的函数并打印结果；每个错误都以消息和非零退出码返回。 |
-| 测试 | 🟡 | 22 个测试通过（`cargo test`），包含正常情况、边界情况和损坏的输入。 |
+| 测试 | 🟡 | 32 个测试通过（`cargo test`），包含正常情况、边界情况和损坏的输入。 |
 | 安全 | 🟡 | 纯安全 Rust（`forbid(unsafe_code)`）：处理收到的文件时不会 panic，错误的值会返回带原因的错误；没有独立审查。 |
 | 窗口 | 🔴 | 计划中：套件通用的 egui 窗口；目前只有命令行。 |
 | 真实硬件 | 🔴 | 未试过：这里的任何内容都没有在机器上运行过。 |
@@ -58,6 +58,7 @@
 * **图像**（`src/image.rs`）：PNG（灰度、彩色、透明，8 或 16 位）和 PGM（文本和二进制）被转为灰度，透明部分按白色处理，并限制尺寸，恶意文件无法要求数 GB 内存；`resize` 对像素取平均，使一个点与光斑一样大。
 * **点阵**（`src/dither.rs`）：阈值，或 Floyd-Steinberg、Atkinson 误差扩散；测试检查灰度的深浅得以保持（中灰烧约一半的点），白色什么都不烧，黑色全部烧。
 * **激光**（`src/raster.rs`、`src/calibrate.rs`）：逐行，先从左到右再从右到左，移动时 `M4` 加 `S0`，烧蚀处用所选功率，过扫为固定值或由加速度算出（v 的平方除以 2a），并提供每列一个功率、每行一个进给的方块网格，用来找到适合某种材料的参数。
+* **`--dry-run`：** `engrave` 计算结果并统计（点数、行数、段数、烧蚀长度、时间），但不写入输出文件（此时可省略该文件）。
 
 ## 🧩 在 EH3D 中的角色
 
@@ -97,14 +98,17 @@ EH3D-LASER-CAM 是 EH3D Fabrication Suite 的一个程序。目前它以库和�
 ```text
 EH3D-LASER-CAM/
 ├── src/
-│   ├── calibrate.rs                             逻辑的一部分
-│   ├── dither.rs                                逻辑的一部分
-│   ├── image.rs                                 逻辑的一部分
 │   ├── lib.rs                                   库：每个命令所使用的部分
 │   ├── main.rs                                  命令行
+│   ├── calibrate.rs                             逻辑的一部分
+│   ├── cli_args.rs                              命令行参数：每个小工具中的同一个文件
+│   ├── dither.rs                                逻辑的一部分
+│   ├── image.rs                                 逻辑的一部分
 │   └── raster.rs                                逻辑的一部分
 ├── tests/
+│   ├── dry_run.rs                               --dry-run 测试：计数相同且不写入任何内容
 │   ├── laser.rs                                 库和命令行的测试
+│   ├── readme.rs                                运行 README 和 run 脚本所承诺内容的测试
 │   └── strict.rs                                命令行测试：它不认识的选项和词
 ├── examples/
 │   └── gradient.pgm                             试用的示例
@@ -137,7 +141,7 @@ cargo run --release -- engrave examples/gradient.pgm examples/gradient.nc --widt
 
 ## 🧪 测试
 
-测试套件有 22 个测试（`cargo test`，CI 在 Windows 和 Linux 上运行）。它们检查正常情况、边界情况和损坏的输入：空文件、乱码和被截断的文件绝不会 panic。CI 还运行 `cargo fmt --check`、把警告当作错误的 `cargo clippy` 以及 `python -I tools/ci_validate.py`。
+测试套件有 32 个测试（`cargo test`，CI 在 Windows 和 Linux 上运行）。它们检查正常情况、边界情况和损坏的输入：空文件、乱码和被截断的文件绝不会 panic。CI 还运行 `cargo fmt --check`、把警告当作错误的 `cargo clippy` 以及 `python -I tools/ci_validate.py`。
 
 ## 🏗️ 构建与发布
 
@@ -155,14 +159,17 @@ cargo run --release -- engrave examples/gradient.pgm examples/gradient.nc --widt
 ```text
 EH3D-LASER-CAM/
 ├── src/
-│   ├── calibrate.rs                             逻辑的一部分
-│   ├── dither.rs                                逻辑的一部分
-│   ├── image.rs                                 逻辑的一部分
 │   ├── lib.rs                                   库：每个命令所使用的部分
 │   ├── main.rs                                  命令行
+│   ├── calibrate.rs                             逻辑的一部分
+│   ├── cli_args.rs                              命令行参数：每个小工具中的同一个文件
+│   ├── dither.rs                                逻辑的一部分
+│   ├── image.rs                                 逻辑的一部分
 │   └── raster.rs                                逻辑的一部分
 ├── tests/
+│   ├── dry_run.rs                               --dry-run 测试：计数相同且不写入任何内容
 │   ├── laser.rs                                 库和命令行的测试
+│   ├── readme.rs                                运行 README 和 run 脚本所承诺内容的测试
 │   └── strict.rs                                命令行测试：它不认识的选项和词
 ├── examples/
 │   └── gradient.pgm                             试用的示例

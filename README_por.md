@@ -18,7 +18,7 @@
 
 ---
 
-**Verificação de honestidade - o que funciona hoje:** uma biblioteca Rust e um programa de linha de comandos (`eh3d-lasercam`) com 22 testes que correm num computador: transforma uma imagem em pontos por tramagem e escreve o G-code de um laser que queima linha a linha com potência dinâmica e sobrecurso, mais uma grelha de teste de potência contra avanço. Ainda não tem janela, não foi experimentado numa máquina e não foi verificado com uma coleção de ficheiros reais.
+**Verificação de honestidade - o que funciona hoje:** uma biblioteca Rust e um programa de linha de comandos (`eh3d-lasercam`) com 32 testes que correm num computador: transforma uma imagem em pontos por tramagem e escreve o G-code de um laser que queima linha a linha com potência dinâmica e sobrecurso, mais uma grelha de teste de potência contra avanço. Ainda não tem janela, não foi experimentado numa máquina e não foi verificado com uma coleção de ficheiros reais.
 
 ---
 
@@ -31,7 +31,7 @@
 |---|---|
 | Versão | `0.0.1` |
 | Maturidade | Estrutura inicial |
-| Testes | 22 |
+| Testes | 32 |
 | Tecnologias | Rust |
 | Em hardware real | Não experimentado: nada disto correu numa máquina |
 
@@ -47,7 +47,7 @@ Cada linha é uma parte deste repositório e a luz diz até onde chega hoje. É 
 |---|---|---|
 | Núcleo | 🟡 | transforma uma imagem em pontos por tramagem e escreve o G-code de um laser que queima linha a linha com potência dinâmica e sobrecurso, mais uma grelha de teste de potência contra avanço; testado num computador com entradas normais e danificadas, não com uma coleção de ficheiros reais. |
 | Linha de comandos | 🟡 | `eh3d-lasercam` executa as mesmas funções da biblioteca e imprime o resultado; cada erro volta como mensagem e código de saída diferente de zero. |
-| Testes | 🟡 | 22 testes passam (`cargo test`), com casos normais, casos-limite e entradas danificadas. |
+| Testes | 🟡 | 32 testes passam (`cargo test`), com casos normais, casos-limite e entradas danificadas. |
 | Segurança | 🟡 | Rust seguro e simples (`forbid(unsafe_code)`): nada entra em pânico com os ficheiros recebidos e um valor mau é um erro com o seu motivo; sem revisão independente. |
 | Janela | 🔴 | Previsto: a janela egui comum à suíte; hoje existe apenas a linha de comandos. |
 | Hardware real | 🔴 | Não experimentado: nada disto foi executado numa máquina. |
@@ -58,6 +58,7 @@ Cada linha é uma parte deste repositório e a luz diz até onde chega hoje. É 
 * **A imagem** (`src/image.rs`): PNG (cinzento, cor, transparente, 8 ou 16 bits) e PGM (texto e binário) tornam-se níveis de cinzento, com as partes transparentes como branco e o tamanho limitado para que um ficheiro hostil não possa pedir gigabytes; `resize` faz a média dos píxeis para que um ponto seja tão grande como o feixe.
 * **Os pontos** (`src/dither.rs`): um limiar, ou difusão de erro de Floyd-Steinberg ou Atkinson; os testes verificam que a escuridão de um cinzento se conserva (um cinzento médio queima cerca de metade dos pontos) e que o branco não queima nada e o preto queima tudo.
 * **O laser** (`src/raster.rs`, `src/calibrate.rs`): uma linha depois da outra, da esquerda para a direita e depois da direita para a esquerda, `M4` com `S0` enquanto viaja e a potência escolhida onde queima, um sobrecurso fixo ou calculado a partir da aceleração (v ao quadrado sobre 2a) e uma grelha de quadrados com uma potência por coluna e um avanço por linha para achar o que convém a um material.
+* **`--dry-run`:** `engrave` calcula o resultado e conta-o (pontos, linhas, passagens, comprimento queimado, tempo) sem escrever o ficheiro de saída, que então pode ser omitido.
 
 ## 🧩 Papel no EH3D
 
@@ -97,14 +98,17 @@ A biblioteca é `eh3d_laser_cam` (`use eh3d_laser_cam::...`); a linha de comando
 ```text
 EH3D-LASER-CAM/
 ├── src/
-│   ├── calibrate.rs                             uma parte da lógica
-│   ├── dither.rs                                uma parte da lógica
-│   ├── image.rs                                 uma parte da lógica
 │   ├── lib.rs                                   a biblioteca: o que cada comando usa
 │   ├── main.rs                                  a linha de comandos
+│   ├── calibrate.rs                             uma parte da lógica
+│   ├── cli_args.rs                              os argumentos da linha de comandos, o mesmo ficheiro em cada utilitário pequeno
+│   ├── dither.rs                                uma parte da lógica
+│   ├── image.rs                                 uma parte da lógica
 │   └── raster.rs                                uma parte da lógica
 ├── tests/
+│   ├── dry_run.rs                               testes de --dry-run: conta o mesmo e não escreve nada
 │   ├── laser.rs                                 testes da biblioteca e da linha de comandos
+│   ├── readme.rs                                testes que executam o que o README e os scripts run prometem
 │   └── strict.rs                                testes da linha de comandos: opções e palavras que não conhece
 ├── examples/
 │   └── gradient.pgm                             um exemplo para experimentar o programa
@@ -137,7 +141,7 @@ cargo run --release -- engrave examples/gradient.pgm examples/gradient.nc --widt
 
 ## 🧪 Testes
 
-O conjunto tem 22 testes (`cargo test`, executados em Windows e Linux no CI). Verificam os casos normais, os casos-limite e as entradas danificadas: ficheiros vazios, lixo e ficheiros cortados nunca provocam pânico. O CI executa ainda `cargo fmt --check`, `cargo clippy` com avisos como erros e `python -I tools/ci_validate.py`.
+O conjunto tem 32 testes (`cargo test`, executados em Windows e Linux no CI). Verificam os casos normais, os casos-limite e as entradas danificadas: ficheiros vazios, lixo e ficheiros cortados nunca provocam pânico. O CI executa ainda `cargo fmt --check`, `cargo clippy` com avisos como erros e `python -I tools/ci_validate.py`.
 
 ## 🏗️ Compilação e publicação
 
@@ -155,14 +159,17 @@ A versão está em `Cargo.toml` e em `eh3d.project.json`; cada versão tem a sua
 ```text
 EH3D-LASER-CAM/
 ├── src/
-│   ├── calibrate.rs                             uma parte da lógica
-│   ├── dither.rs                                uma parte da lógica
-│   ├── image.rs                                 uma parte da lógica
 │   ├── lib.rs                                   a biblioteca: o que cada comando usa
 │   ├── main.rs                                  a linha de comandos
+│   ├── calibrate.rs                             uma parte da lógica
+│   ├── cli_args.rs                              os argumentos da linha de comandos, o mesmo ficheiro em cada utilitário pequeno
+│   ├── dither.rs                                uma parte da lógica
+│   ├── image.rs                                 uma parte da lógica
 │   └── raster.rs                                uma parte da lógica
 ├── tests/
+│   ├── dry_run.rs                               testes de --dry-run: conta o mesmo e não escreve nada
 │   ├── laser.rs                                 testes da biblioteca e da linha de comandos
+│   ├── readme.rs                                testes que executam o que o README e os scripts run prometem
 │   └── strict.rs                                testes da linha de comandos: opções e palavras que não conhece
 ├── examples/
 │   └── gradient.pgm                             um exemplo para experimentar o programa

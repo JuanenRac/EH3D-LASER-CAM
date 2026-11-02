@@ -27,6 +27,32 @@
       "accent": "a",
       "rows": [
         {
+          "name": "lib.rs",
+          "desc": {
+            "en": "the library: what every command uses",
+            "es": "la biblioteca: lo que usa cada orden",
+            "de": "die Bibliothek: was jeder Befehl nutzt",
+            "fr": "la bibliothèque : ce que chaque commande utilise",
+            "it": "la libreria: ciò che usa ogni comando",
+            "ja": "ライブラリ：各コマンドが使うもの",
+            "zh": "库：每个命令所使用的部分",
+            "pt": "a biblioteca: o que cada comando usa"
+          }
+        },
+        {
+          "name": "main.rs",
+          "desc": {
+            "en": "the command line",
+            "es": "la línea de comandos",
+            "de": "die Kommandozeile",
+            "fr": "la ligne de commande",
+            "it": "la riga di comando",
+            "ja": "コマンドライン",
+            "zh": "命令行",
+            "pt": "a linha de comandos"
+          }
+        },
+        {
           "name": "calibrate.rs",
           "desc": {
             "en": "a part of the logic",
@@ -37,6 +63,19 @@
             "ja": "ロジックの一部",
             "zh": "逻辑的一部分",
             "pt": "uma parte da lógica"
+          }
+        },
+        {
+          "name": "cli_args.rs",
+          "desc": {
+            "en": "the arguments of the command line, the same file in every small utility",
+            "es": "los argumentos de la línea de comandos, el mismo fichero en cada utilidad pequeña",
+            "de": "die Argumente der Kommandozeile, dieselbe Datei in jedem kleinen Werkzeug",
+            "fr": "les arguments de la ligne de commande, le même fichier dans chaque petit utilitaire",
+            "it": "gli argomenti della riga di comando, lo stesso file in ogni piccola utilità",
+            "ja": "コマンドライン引数：小さなツールすべてで同じファイル",
+            "zh": "命令行参数：每个小工具中的同一个文件",
+            "pt": "os argumentos da linha de comandos, o mesmo ficheiro em cada utilitário pequeno"
           }
         },
         {
@@ -66,32 +105,6 @@
           }
         },
         {
-          "name": "lib.rs",
-          "desc": {
-            "en": "the library: what every command uses",
-            "es": "la biblioteca: lo que usa cada orden",
-            "de": "die Bibliothek: was jeder Befehl nutzt",
-            "fr": "la bibliothèque : ce que chaque commande utilise",
-            "it": "la libreria: ciò che usa ogni comando",
-            "ja": "ライブラリ：各コマンドが使うもの",
-            "zh": "库：每个命令所使用的部分",
-            "pt": "a biblioteca: o que cada comando usa"
-          }
-        },
-        {
-          "name": "main.rs",
-          "desc": {
-            "en": "the command line",
-            "es": "la línea de comandos",
-            "de": "die Kommandozeile",
-            "fr": "la ligne de commande",
-            "it": "la riga di comando",
-            "ja": "コマンドライン",
-            "zh": "命令行",
-            "pt": "a linha de comandos"
-          }
-        },
-        {
           "name": "raster.rs",
           "desc": {
             "en": "a part of the logic",
@@ -112,6 +125,19 @@
       "accent": "d",
       "rows": [
         {
+          "name": "dry_run.rs",
+          "desc": {
+            "en": "tests of --dry-run: it counts the same and writes nothing",
+            "es": "pruebas de --dry-run: cuenta lo mismo y no escribe nada",
+            "de": "Tests von --dry-run: zählt dasselbe und schreibt nichts",
+            "fr": "tests de --dry-run : compte la même chose et n'écrit rien",
+            "it": "test di --dry-run: conta lo stesso e non scrive nulla",
+            "ja": "--dry-runのテスト：同じ数を数え、何も書かない",
+            "zh": "--dry-run 测试：计数相同且不写入任何内容",
+            "pt": "testes de --dry-run: conta o mesmo e não escreve nada"
+          }
+        },
+        {
           "name": "laser.rs",
           "desc": {
             "en": "tests of the library and the command line",
@@ -122,6 +148,19 @@
             "ja": "ライブラリとコマンドラインのテスト",
             "zh": "库和命令行的测试",
             "pt": "testes da biblioteca e da linha de comandos"
+          }
+        },
+        {
+          "name": "readme.rs",
+          "desc": {
+            "en": "tests that run what the README and the run scripts promise",
+            "es": "pruebas que ejecutan lo que prometen el README y los scripts run",
+            "de": "Tests, die ausführen, was README und run-Skripte versprechen",
+            "fr": "tests qui exécutent ce que promettent le README et les scripts run",
+            "it": "test che eseguono ciò che promettono il README e gli script run",
+            "ja": "READMEとrunスクリプトが約束する内容を実行するテスト",
+            "zh": "运行 README 和 run 脚本所承诺内容的测试",
+            "pt": "testes que executam o que o README e os scripts run prometem"
           }
         },
         {
