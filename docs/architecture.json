@@ -39,7 +39,7 @@
         "then to dots"
       ],
       "code": [
-        "src/image.rs::pub fn from_bytes",
+        "src/lib.rs::pub use eh3d_image as image",
         "src/dither.rs::pub fn dither"
       ]
     },
@@ -70,16 +70,16 @@
       ]
     },
     {
-      "id": "png",
+      "id": "common",
       "column": 2,
       "level": "external",
-      "title": "png",
+      "title": "eh3d-image",
       "lines": [
-        "the PNG decoder, the only",
-        "dependency"
+        "the PNG and PGM reader of",
+        "EH3D-COMMON (a sibling)"
       ],
       "code": [
-        "Cargo.toml::png"
+        "Cargo.toml::eh3d-image"
       ]
     },
     {
@@ -113,7 +113,7 @@
     },
     {
       "from": "image",
-      "to": "png",
+      "to": "common",
       "level": "tested"
     },
     {

@@ -55,7 +55,7 @@
 
 ## 🎯 概要
 
-* **画像**（`src/image.rs`）：PNG（グレー、カラー、透明、8 または 16 ビット）と PGM（テキスト、バイナリ）を濃淡に変換し、透明部分は白として扱い、悪意あるファイルがギガバイトを要求できないようサイズを制限します。`resize` は画素を平均し、1 点をビーム径の大きさにします。
+* **画像**（`eh3d-image`）：PNG（グレー、カラー、透明、8 または 16 ビット）と PGM（テキスト、バイナリ）を濃淡に変換し、透明部分は白として扱い、悪意あるファイルがギガバイトを要求できないようサイズを制限します。`resize` は画素を平均し、1 点をビーム径の大きさにします。
 * **点**（`src/dither.rs`）：しきい値、または Floyd-Steinberg か Atkinson の誤差拡散。テストで、灰色の濃さが保たれること（中間の灰色は約半分の点を焼く）、白は何も焼かず黒はすべて焼くことを確認します。
 * **レーザー**（`src/raster.rs`、`src/calibrate.rs`）：1 行ずつ、左から右、次は右から左へ、移動中は `M4` と `S0`、焼く所では選んだ出力、固定または加速度から求めたオーバースキャン（v の 2 乗を 2a で割る）、そして材料に合う値を探すための、列ごとに出力・行ごとに送りを変えた正方形の格子。
 * **`--dry-run`：** `engrave` は結果を計算して集計し（ドット、行、走査、焼く長さ、時間）、出力ファイルは書き出しません（その場合は省略できます）。
@@ -103,7 +103,6 @@ EH3D-LASER-CAM/
 │   ├── calibrate.rs                             ロジックの一部
 │   ├── cli_args.rs                              コマンドライン引数：小さなツールすべてで同じファイル
 │   ├── dither.rs                                ロジックの一部
-│   ├── image.rs                                 ロジックの一部
 │   └── raster.rs                                ロジックの一部
 ├── tests/
 │   ├── dry_run.rs                               --dry-runのテスト：同じ数を数え、何も書かない
@@ -131,7 +130,7 @@ EH3D-LASER-CAM/
 
 ## 🚀 クイックスタート
 
-安定版の Rust ツールチェーン（1.75 以降）が必要です。
+安定版の Rust ツールチェーン（1.75 以降）が必要です。EH3D-COMMON リポジトリをこのリポジトリの隣にクローンしておく必要があります。画像リーダーはそこからパスで取り込みます。
 
 ```bash
 cargo build --release
@@ -208,6 +207,7 @@ README とテキストは、英語、スペイン語、フランス語、イタ�
 
 ## 🔗 関連プロジェクト
 
+* [EH3D-COMMON](https://github.com/JuanenRac/EH3D-COMMON)：共有クレート（画像リーダーを含む）
 * [EH3D-STENCILCAM](https://github.com/JuanenRac/EH3D-STENCILCAM): はんだペースト用ステンシル
 * [EH3D-CAM-DEBUGGER](https://github.com/JuanenRac/EH3D-CAM-DEBUGGER): 機械に届く前の G コード検査
 * [EH3D-TOOL-MANAGER](https://github.com/JuanenRac/EH3D-TOOL-MANAGER): CAM プログラム共通の工具庫

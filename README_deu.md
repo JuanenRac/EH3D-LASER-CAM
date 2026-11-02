@@ -55,7 +55,7 @@ Jede Zeile ist ein Teil dieses Repositorys, und die Ampel sagt, wie weit er heut
 
 ## 🎯 Überblick
 
-* **Das Bild** (`src/image.rs`): PNG (Grau, Farbe, transparent, 8 oder 16 Bit) und PGM (Text und binär) werden zu Graustufen, transparente Teile als Weiß, die Größe ist begrenzt, damit eine feindliche Datei keine Gigabytes verlangen kann; `resize` mittelt die Pixel, sodass ein Punkt so groß wie der Strahl ist.
+* **Das Bild** (`eh3d-image`): PNG (Grau, Farbe, transparent, 8 oder 16 Bit) und PGM (Text und binär) werden zu Graustufen, transparente Teile als Weiß, die Größe ist begrenzt, damit eine feindliche Datei keine Gigabytes verlangen kann; `resize` mittelt die Pixel, sodass ein Punkt so groß wie der Strahl ist.
 * **Die Punkte** (`src/dither.rs`): ein Schwellwert oder Fehlerdiffusion nach Floyd-Steinberg oder Atkinson; die Tests prüfen, dass die Dunkelheit eines Grautons erhalten bleibt (ein mittleres Grau brennt etwa die Hälfte der Punkte) und dass Weiß nichts und Schwarz alles brennt.
 * **Der Laser** (`src/raster.rs`, `src/calibrate.rs`): Zeile für Zeile, von links nach rechts und dann von rechts nach links, `M4` mit `S0` beim Verfahren und der gewählten Leistung beim Brennen, ein fester oder aus der Beschleunigung berechneter Überlauf (v zum Quadrat durch 2a) und ein Raster aus Quadraten mit einer Leistung je Spalte und einem Vorschub je Zeile, um das Passende für ein Material zu finden.
 * **`--dry-run`:** `engrave` berechnet das Ergebnis und zählt es (Punkte, Zeilen, Läufe, gebrannte Länge, Zeit), ohne die Ausgabedatei zu schreiben, die dann entfallen darf.
@@ -103,7 +103,6 @@ EH3D-LASER-CAM/
 │   ├── calibrate.rs                             ein Teil der Logik
 │   ├── cli_args.rs                              die Argumente der Kommandozeile, dieselbe Datei in jedem kleinen Werkzeug
 │   ├── dither.rs                                ein Teil der Logik
-│   ├── image.rs                                 ein Teil der Logik
 │   └── raster.rs                                ein Teil der Logik
 ├── tests/
 │   ├── dry_run.rs                               Tests von --dry-run: zählt dasselbe und schreibt nichts
@@ -131,7 +130,7 @@ Es gibt noch keine Konfigurationsdatei: Was die Person wählt, wird als Argument
 
 ## 🚀 Schnellstart
 
-Sie brauchen eine stabile Rust-Toolchain (1.75 oder neuer).
+Sie brauchen eine stabile Rust-Toolchain (1.75 oder neuer). Das Repository EH3D-COMMON muss neben diesem geklont sein: der Bildleser wird daraus per Pfad übernommen.
 
 ```bash
 cargo build --release
@@ -208,6 +207,7 @@ README und Texte gibt es auf Englisch, Spanisch, Französisch, Italienisch, Deut
 
 ## 🔗 Verwandte Projekte
 
+* [EH3D-COMMON](https://github.com/JuanenRac/EH3D-COMMON): die gemeinsamen Crates, darunter der Bildleser
 * [EH3D-STENCILCAM](https://github.com/JuanenRac/EH3D-STENCILCAM): Lotpasten-Schablonen
 * [EH3D-CAM-DEBUGGER](https://github.com/JuanenRac/EH3D-CAM-DEBUGGER): die Prüfung von G-Code, bevor er eine Maschine erreicht
 * [EH3D-TOOL-MANAGER](https://github.com/JuanenRac/EH3D-TOOL-MANAGER): das Werkzeuglager der CAM-Programme

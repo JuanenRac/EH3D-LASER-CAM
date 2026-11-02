@@ -55,7 +55,7 @@
 
 ## 🎯 概述
 
-* **图像**（`src/image.rs`）：PNG（灰度、彩色、透明，8 或 16 位）和 PGM（文本和二进制）被转为灰度，透明部分按白色处理，并限制尺寸，恶意文件无法要求数 GB 内存；`resize` 对像素取平均，使一个点与光斑一样大。
+* **图像**（`eh3d-image`）：PNG（灰度、彩色、透明，8 或 16 位）和 PGM（文本和二进制）被转为灰度，透明部分按白色处理，并限制尺寸，恶意文件无法要求数 GB 内存；`resize` 对像素取平均，使一个点与光斑一样大。
 * **点阵**（`src/dither.rs`）：阈值，或 Floyd-Steinberg、Atkinson 误差扩散；测试检查灰度的深浅得以保持（中灰烧约一半的点），白色什么都不烧，黑色全部烧。
 * **激光**（`src/raster.rs`、`src/calibrate.rs`）：逐行，先从左到右再从右到左，移动时 `M4` 加 `S0`，烧蚀处用所选功率，过扫为固定值或由加速度算出（v 的平方除以 2a），并提供每列一个功率、每行一个进给的方块网格，用来找到适合某种材料的参数。
 * **`--dry-run`：** `engrave` 计算结果并统计（点数、行数、段数、烧蚀长度、时间），但不写入输出文件（此时可省略该文件）。
@@ -103,7 +103,6 @@ EH3D-LASER-CAM/
 │   ├── calibrate.rs                             逻辑的一部分
 │   ├── cli_args.rs                              命令行参数：每个小工具中的同一个文件
 │   ├── dither.rs                                逻辑的一部分
-│   ├── image.rs                                 逻辑的一部分
 │   └── raster.rs                                逻辑的一部分
 ├── tests/
 │   ├── dry_run.rs                               --dry-run 测试：计数相同且不写入任何内容
@@ -131,7 +130,7 @@ EH3D-LASER-CAM/
 
 ## 🚀 快速开始
 
-需要稳定版 Rust 工具链（1.75 或更新）。
+需要稳定版 Rust 工具链（1.75 或更新）。需要把 EH3D-COMMON 仓库克隆到本仓库旁边：图像读取器通过路径从中引入。
 
 ```bash
 cargo build --release
@@ -208,6 +207,7 @@ README 和文本提供英语、西班牙语、法语、意大利语、德语、�
 
 ## 🔗 相关项目
 
+* [EH3D-COMMON](https://github.com/JuanenRac/EH3D-COMMON)：共享 crate，其中包括图像读取器
 * [EH3D-STENCILCAM](https://github.com/JuanenRac/EH3D-STENCILCAM): 锡膏钢网
 * [EH3D-CAM-DEBUGGER](https://github.com/JuanenRac/EH3D-CAM-DEBUGGER): G 代码到达机器之前的检查
 * [EH3D-TOOL-MANAGER](https://github.com/JuanenRac/EH3D-TOOL-MANAGER): CAM 程序共用的刀具库

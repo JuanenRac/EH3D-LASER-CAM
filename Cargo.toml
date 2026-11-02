@@ -17,6 +17,11 @@ name = "eh3d-lasercam"
 path = "src/main.rs"
 
 [dependencies]
+# the reader of PGM and PNG pictures, shared with the other programs that work from a picture
+eh3d-image = { version = ">=0.0.1", path = "../EH3D-COMMON/crates/image" }
+
+[dev-dependencies]
+# the tests make their own PNG files
 png = "0.17"
 
 [profile.release]

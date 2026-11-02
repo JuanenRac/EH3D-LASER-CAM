@@ -55,7 +55,7 @@ Each line is one part of this repository and the light says how far it is today.
 
 ## 🎯 Overview
 
-* **The image** (`src/image.rs`): PNG (grey, colour, transparent, 8 or 16 bits) and PGM (text and binary) become grey levels, with transparent parts as white and the size limited so that a hostile file cannot ask for gigabytes; `resize` averages the pixels so that one dot is as big as the beam.
+* **The image** (`eh3d-image`): PNG (grey, colour, transparent, 8 or 16 bits) and PGM (text and binary) become grey levels, with transparent parts as white and the size limited so that a hostile file cannot ask for gigabytes; `resize` averages the pixels so that one dot is as big as the beam.
 * **The dots** (`src/dither.rs`): a threshold, Floyd-Steinberg or Atkinson error diffusion; the tests check that the darkness of a grey is kept (a mid grey burns about half of the dots) and that white burns nothing and black burns everything.
 * **The laser** (`src/raster.rs`, `src/calibrate.rs`): one line after another, left to right and then right to left, `M4` with `S0` while it travels and the chosen power where it burns, an overscan fixed or worked out from the acceleration (v squared over 2a), and a grid of squares with a power for each column and a feed for each row to find what suits a material.
 * **`--dry-run`:** `engrave` works the result out and counts it (dots, lines, runs, burnt length, time) without writing the output file, which may then be left out.
@@ -103,7 +103,6 @@ EH3D-LASER-CAM/
 │   ├── calibrate.rs                             a part of the logic
 │   ├── cli_args.rs                              the arguments of the command line, the same file in every small utility
 │   ├── dither.rs                                a part of the logic
-│   ├── image.rs                                 a part of the logic
 │   └── raster.rs                                a part of the logic
 ├── tests/
 │   ├── dry_run.rs                               tests of --dry-run: it counts the same and writes nothing
@@ -131,7 +130,7 @@ There is no configuration file yet: what a person chooses is given as arguments 
 
 ## 🚀 Quick start
 
-You need a stable Rust toolchain (1.75 or newer).
+You need a stable Rust toolchain (1.75 or newer). The repository EH3D-COMMON must be cloned beside this one: the reader of pictures is taken from it by path.
 
 ```bash
 cargo build --release
@@ -208,6 +207,7 @@ README and texts exist in English, Spanish, French, Italian, German, Chinese, Ja
 
 ## 🔗 Related Projects
 
+* [EH3D-COMMON](https://github.com/JuanenRac/EH3D-COMMON): the shared crates, among them the reader of pictures
 * [EH3D-STENCILCAM](https://github.com/JuanenRac/EH3D-STENCILCAM): solder paste stencils
 * [EH3D-CAM-DEBUGGER](https://github.com/JuanenRac/EH3D-CAM-DEBUGGER): the checking of G-code before it reaches a machine
 * [EH3D-TOOL-MANAGER](https://github.com/JuanenRac/EH3D-TOOL-MANAGER): the tool crib shared by the CAM programs

@@ -92,19 +92,6 @@
           }
         },
         {
-          "name": "image.rs",
-          "desc": {
-            "en": "a part of the logic",
-            "es": "una parte de la lógica",
-            "de": "ein Teil der Logik",
-            "fr": "une partie de la logique",
-            "it": "una parte della logica",
-            "ja": "ロジックの一部",
-            "zh": "逻辑的一部分",
-            "pt": "uma parte da lógica"
-          }
-        },
-        {
           "name": "raster.rs",
           "desc": {
             "en": "a part of the logic",

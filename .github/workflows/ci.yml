@@ -34,6 +34,9 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@v5
+      - name: Check out the sibling EH3D-COMMON (a path dependency)
+        shell: bash
+        run: git clone --depth 1 https://github.com/JuanenRac/EH3D-COMMON.git ../EH3D-COMMON
       - name: Rust toolchain
         run: rustup toolchain install stable --profile minimal --component rustfmt,clippy
       - name: Format
