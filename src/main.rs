@@ -2,6 +2,9 @@
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D). GPL-3.0-or-later.
 #![forbid(unsafe_code)]
 
+mod cli_args;
+
+use cli_args::{finish, flag, num, switch};
 use eh3d_laser_cam::calibrate::{grid, Grid};
 use eh3d_laser_cam::dither::{dither, Method};
 use eh3d_laser_cam::image::from_bytes;
@@ -13,47 +16,15 @@ use std::process::ExitCode;
 const HELP: &str = "eh3d-lasercam: laser engraving from an image
 
   eh3d-lasercam engrave IMAGE OUT.nc --width-mm 50 [--dot-mm 0.1] [--feed 3000] [--power 50] [--smax 1000]
-                [--dither fs|atkinson|threshold] [--threshold 128] [--overscan MM|auto] [--accel 1000] [--origin X,Y]
+                [--dither fs|atkinson|threshold] [--threshold 128] [--overscan MM|auto] [--accel 1000] [--origin X,Y] [--dry-run]
   eh3d-lasercam calibrate OUT.nc --powers 20,40,60,80 --feeds 1000,2000,3000 [--smax 1000]
   eh3d-lasercam info IMAGE
 
-IMAGE is a PNG or a PGM file. --power is a percent of full power; --smax is the spindle value that is full power for the controller (GRBL: $30).
+IMAGE is a PNG or a PGM file. --dry-run works the engraving out and counts it but writes nothing (OUT.nc may then be left out). --power is a percent of full power; --smax is the spindle value that is full power for the controller (GRBL: $30).
 The engraving is made of dots of --dot-mm on a side, so the image is scaled to --width-mm / --dot-mm dots wide.";
-
-fn flag(args: &mut Vec<String>, name: &str) -> Result<Option<String>, String> {
-    if let Some(i) = args.iter().position(|a| a == name) {
-        let v = args
-            .get(i + 1)
-            .ok_or_else(|| format!("{name} needs a value"))?
-            .clone();
-        args.drain(i..=i + 1);
-        return Ok(Some(v));
-    }
-    Ok(None)
-}
-
-fn num(text: &str, what: &str) -> Result<f64, String> {
-    text.trim()
-        .parse::<f64>()
-        .ok()
-        .filter(|v| v.is_finite())
-        .ok_or_else(|| format!("{what} '{text}' is not a number"))
-}
 
 fn list(text: &str, what: &str) -> Result<Vec<f64>, String> {
     text.split(',').map(|p| num(p, what)).collect()
-}
-
-/// What is left of the arguments once the options and the wanted words are taken must be nothing more than `max` words: an option that is written wrong or an extra word is an
-/// error, not something to ignore (the program would then make its output with the default values).
-fn finish(args: &[String], max: usize) -> Result<(), String> {
-    if let Some(o) = args.iter().find(|a| a.starts_with("--")) {
-        return Err(format!("{o}: unknown option (see help)"));
-    }
-    if args.len() > max {
-        return Err(format!("{}: unexpected argument (see help)", args[max]));
-    }
-    Ok(())
 }
 
 fn run(mut args: Vec<String>) -> Result<(), String> {
@@ -112,8 +83,14 @@ fn run(mut args: Vec<String>) -> Result<(), String> {
                     ))
                 }
             };
-            if args.len() < 2 {
-                return Err("engrave needs an image and an output file".into());
+            let dry_run = switch(&mut args, "--dry-run");
+            let needed = if dry_run { 1 } else { 2 };
+            if args.len() < needed {
+                return Err(if dry_run {
+                    "engrave needs an image".into()
+                } else {
+                    "engrave needs an image and an output file".into()
+                });
             }
             finish(&args, 2)?;
             let img = from_bytes(&fs::read(&args[0]).map_err(|e| format!("{}: {e}", args[0]))?)?;
@@ -125,7 +102,12 @@ fn run(mut args: Vec<String>) -> Result<(), String> {
             let h = ((w as f64) * img.h as f64 / img.w as f64).round().max(1.0) as usize;
             let dots = dither(&img.resize(w, h)?, method);
             let e = engrave(&dots, &p)?;
-            fs::write(&args[1], &e.gcode).map_err(|er| format!("{}: {er}", args[1]))?;
+            // a dry run works the engraving out and counts it, and writes nothing
+            if dry_run {
+                print!("dry run, nothing written: ");
+            } else {
+                fs::write(&args[1], &e.gcode).map_err(|er| format!("{}: {er}", args[1]))?;
+            }
             println!("{} x {} dots ({:.1} x {:.1} mm), {} lines, {} runs, {:.0} mm burned, about {:.0} s", dots.w, dots.h, dots.w as f64 * p.pixel_mm, dots.h as f64 * p.pixel_mm, e.rows, e.runs, e.burn_mm, e.seconds);
             Ok(())
         }
