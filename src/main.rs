@@ -1,25 +1,25 @@
-// EH3D-LASER-CAM - command line.
+// EH3D-PHOENIX-LASER - command line.
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D). GPL-3.0-or-later.
 #![forbid(unsafe_code)]
 
 mod cli_args;
 
 use cli_args::{finish, flag, num, switch};
-use eh3d_laser_cam::calibrate::{grid, Grid};
-use eh3d_laser_cam::dither::{dither, Method};
-use eh3d_laser_cam::gcode_out::{header, sha256_hex, Header};
-use eh3d_laser_cam::image::from_bytes;
-use eh3d_laser_cam::raster::{engrave, overscan_for, Params};
+use eh3d_phoenix_laser::calibrate::{grid, Grid};
+use eh3d_phoenix_laser::dither::{dither, Method};
+use eh3d_phoenix_laser::gcode_out::{header, sha256_hex, Header};
+use eh3d_phoenix_laser::image::from_bytes;
+use eh3d_phoenix_laser::raster::{engrave, overscan_for, Params};
 use std::env;
 use std::fs;
 use std::process::ExitCode;
 
-const HELP: &str = "eh3d-lasercam: laser engraving from an image
+const HELP: &str = "phoenix-laser: laser engraving from an image
 
-  eh3d-lasercam engrave IMAGE OUT.nc --width-mm 50 [--dot-mm 0.1] [--feed 3000] [--power 50] [--smax 1000]
+  phoenix-laser engrave IMAGE OUT.nc --width-mm 50 [--dot-mm 0.1] [--feed 3000] [--power 50] [--smax 1000]
                 [--dither fs|atkinson|threshold] [--threshold 128] [--overscan MM|auto] [--accel 1000] [--origin X,Y] [--dry-run]
-  eh3d-lasercam calibrate OUT.nc --powers 20,40,60,80 --feeds 1000,2000,3000 [--smax 1000]
-  eh3d-lasercam info IMAGE
+  phoenix-laser calibrate OUT.nc --powers 20,40,60,80 --feeds 1000,2000,3000 [--smax 1000]
+  phoenix-laser info IMAGE
 
 IMAGE is a PNG or a PGM file. --dry-run works the engraving out and counts it but writes nothing (OUT.nc may then be left out). --power is a percent of full power; --smax is the spindle value that is full power for the controller (GRBL: $30).
 The engraving is made of dots of --dot-mm on a side, so the image is scaled to --width-mm / --dot-mm dots wide.";
@@ -114,7 +114,7 @@ fn run(mut args: Vec<String>) -> Result<(), String> {
                     .map_or(args[0].clone(), |n| n.to_string_lossy().into_owned());
                 let tools = format!("laser, S 0-{} ({} %)", p.s_max, p.power_percent);
                 let head = header(&Header {
-                    generator: "eh3d-lasercam",
+                    generator: "phoenix-laser",
                     version: env!("CARGO_PKG_VERSION"),
                     source: Some((&name, sha256_hex(&bytes))),
                     tools: &tools,
@@ -141,7 +141,7 @@ fn run(mut args: Vec<String>) -> Result<(), String> {
             finish(&args, 1)?;
             let out = args.first().ok_or("calibrate needs an output file")?;
             let head = header(&Header {
-                generator: "eh3d-lasercam",
+                generator: "phoenix-laser",
                 version: env!("CARGO_PKG_VERSION"),
                 source: None,
                 tools: &format!("laser, S 0-{}, grid of power against feed", g.s_max),

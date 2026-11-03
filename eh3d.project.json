@@ -1,8 +1,9 @@
 {
   "schema_version": "1.1",
   "ecosystem": "EH3D",
-  "name": "EH3D-LASER-CAM",
+  "name": "EH3D-PHOENIX-LASER",
   "version": "0.0.3",
+  "former_name": "EH3D-LASER-CAM",
   "role": "tool",
   "stack": "rust",
   "technologies": [
@@ -21,7 +22,7 @@
     "EH3D-COMMON"
   ],
   "build": "cargo build --release; cargo test",
-  "notes": "Scaffolding v0.0.3: a library and a command line that read a PNG or PGM image, turn it into dots (threshold, Floyd-Steinberg or Atkinson dithering) and write the G-code of a laser that burns line by line with M4 dynamic power, S0 while it travels, an overscan worked out from the acceleration and alternating directions, plus a power-against-feed calibration grid. No window, no vector cutting and nothing has been tried on a laser.",
+  "notes": "EH3D-PHOENIX-LASER is the laser engraving program of the PHOENIX family (bright red phoenix), formerly EH3D-LASER-CAM. Scaffolding v0.0.3: a library and a command line that read a PNG or PGM image, turn it into dots (threshold, Floyd-Steinberg or Atkinson dithering) and write the G-code of a laser that burns line by line with M4 dynamic power, S0 while it travels, an overscan worked out from the acceleration and alternating directions, plus a power-against-feed calibration grid. No window, no vector cutting and nothing has been tried on a laser.",
   "native_version": {
     "file": "Cargo.toml",
     "pattern": "^version\\s*=\\s*\"(\\d+\\.\\d+\\.\\d+)\""

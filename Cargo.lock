@@ -37,7 +37,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "eh3d-laser-cam"
+name = "eh3d-phoenix-laser"
 version = "0.0.3"
 dependencies = [
  "eh3d-image",

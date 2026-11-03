@@ -1,19 +1,19 @@
 [package]
-name = "eh3d-laser-cam"
+name = "eh3d-phoenix-laser"
 version = "0.0.3"
 edition = "2021"
 rust-version = "1.75"
 description = "Laser engraving from an image: dithering (threshold, Floyd-Steinberg, Atkinson), raster G-code with dynamic power and overscan, and a power-against-feed calibration grid"
 license = "GPL-3.0-or-later"
-repository = "https://github.com/JuanenRac/EH3D-LASER-CAM"
+repository = "https://github.com/JuanenRac/EH3D-PHOENIX-LASER"
 readme = "README.md"
 
 [lib]
-name = "eh3d_laser_cam"
+name = "eh3d_phoenix_laser"
 path = "src/lib.rs"
 
 [[bin]]
-name = "eh3d-lasercam"
+name = "phoenix-laser"
 path = "src/main.rs"
 
 [dependencies]

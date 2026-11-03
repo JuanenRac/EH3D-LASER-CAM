@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="images/EH3D_BANNER.svg" alt="EH3D-LASER-CAM banner" width="100%">
+  <img src="images/EH3D_PHOENIX_LASER_BANNER.svg" alt="EH3D-PHOENIX-LASER banner" width="100%">
 </p>
 
-# <img src="images/brand/icon-64.png" alt="" width="40" height="40" align="absmiddle"> EH3D-LASER-CAM
+# <img src="images/brand/icon-64.png" alt="" width="40" height="40" align="absmiddle"> EH3D-PHOENIX-LASER
 <p align="center"><a href="README.md">🇺🇸 English</a> | <a href="README_spa.md">🇪🇸 Español</a> | <a href="README_fra.md">🇫🇷 Français</a> | <a href="README_ita.md">🇮🇹 Italiano</a> | 🇩🇪 <b>Deutsch</b> | <a href="README_zho.md">🇨🇳 中文</a> | <a href="README_jpn.md">🇯🇵 日本語</a> | <a href="README_por.md">🇵🇹 Português</a></p>
 
 ### Lasergravur aus einem Bild: Dithering, Raster-G-Code und Kalibrierraster
@@ -17,7 +17,7 @@
 
 ---
 
-**Ehrlichkeitscheck - was heute wirklich läuft:** eine Rust-Bibliothek und ein Kommandozeilenprogramm (`eh3d-lasercam`) mit 74 Tests, die auf einem Computer laufen: wandelt ein Bild durch Dithering in Punkte um und schreibt den G-Code eines Lasers, der zeilenweise mit dynamischer Leistung und Überlauf brennt, sowie ein Testraster Leistung gegen Vorschub. Es hat noch kein Fenster, wurde an keiner Maschine ausprobiert und nicht an einer Sammlung echter Dateien geprüft.
+**Ehrlichkeitscheck - was heute wirklich läuft:** eine Rust-Bibliothek und ein Kommandozeilenprogramm (`phoenix-laser`) mit 74 Tests, die auf einem Computer laufen: wandelt ein Bild durch Dithering in Punkte um und schreibt den G-Code eines Lasers, der zeilenweise mit dynamischer Leistung und Überlauf brennt, sowie ein Testraster Leistung gegen Vorschub. Es hat noch kein Fenster, wurde an keiner Maschine ausprobiert und nicht an einer Sammlung echter Dateien geprüft.
 
 ---
 
@@ -45,7 +45,7 @@ Jede Zeile ist ein Teil dieses Repositorys, und die Ampel sagt, wie weit er heut
 | Bereich | Stand | Was das hier bedeutet |
 |---|---|---|
 | Kern | 🟡 | wandelt ein Bild durch Dithering in Punkte um und schreibt den G-Code eines Lasers, der zeilenweise mit dynamischer Leistung und Überlauf brennt, sowie ein Testraster Leistung gegen Vorschub; am Computer mit normalen und beschädigten Eingaben getestet, nicht mit einer Sammlung echter Dateien. |
-| Kommandozeile | 🟡 | `eh3d-lasercam` führt dieselben Funktionen wie die Bibliothek aus und gibt das Ergebnis aus; jeder Fehler kommt als Meldung mit einem Exit-Code ungleich null zurück. |
+| Kommandozeile | 🟡 | `phoenix-laser` führt dieselben Funktionen wie die Bibliothek aus und gibt das Ergebnis aus; jeder Fehler kommt als Meldung mit einem Exit-Code ungleich null zurück. |
 | Tests | 🟡 | 74 Tests bestehen (`cargo test`), mit Normalfällen, Grenzfällen und beschädigten Eingaben. |
 | Sicherheit | 🟡 | Reines sicheres Rust (`forbid(unsafe_code)`): nichts gerät bei den übergebenen Dateien in Panik und ein schlechter Wert ist ein Fehler mit Begründung; keine unabhängige Prüfung. |
 | Fenster | 🔴 | Geplant: das egui-Fenster, das die Suite gemeinsam nutzt; heute gibt es nur die Kommandozeile. |
@@ -62,12 +62,12 @@ Jede Zeile ist ein Teil dieses Repositorys, und die Ampel sagt, wie weit er heut
 
 ## 🧩 Rolle in EH3D
 
-EH3D-LASER-CAM ist ein Programm der EH3D Fabrication Suite. Heute arbeitet es als Bibliothek und Kommandozeile; sein Fenster im gemeinsamen Aussehen der Suite ist geplant. Es liest und schreibt einfache Dateien und lässt sich allein oder zwischen den anderen Programmen nutzen.
+EH3D-PHOENIX-LASER ist ein Programm der EH3D Fabrication Suite. Heute arbeitet es als Bibliothek und Kommandozeile; sein Fenster im gemeinsamen Aussehen der Suite ist geplant. Es liest und schreibt einfache Dateien und lässt sich allein oder zwischen den anderen Programmen nutzen.
 
 ## 🏛️ Architektur
 
 <p align="center">
-  <img src="images/architecture.svg" alt="Architektur von EH3D-LASER-CAM: wer es nutzt, was es enthält und wovon es abhängt" width="100%">
+  <img src="images/architecture.svg" alt="Architektur von EH3D-PHOENIX-LASER: wer es nutzt, was es enthält und wovon es abhängt" width="100%">
 </p>
 
 
@@ -75,7 +75,7 @@ Wie die Teile dieses Repositorys zusammenpassen: wer es nutzt, was es enthält u
 
 ## ✨ Funktionen
 
-* **Bibliothek und Kommandozeile:** Jeder Befehl von `eh3d-lasercam` ist eine Funktion der Bibliothek, sodass ein anderes Programm der Suite ihn ohne Prozessstart aufrufen kann.
+* **Bibliothek und Kommandozeile:** Jeder Befehl von `phoenix-laser` ist eine Funktion der Bibliothek, sodass ein anderes Programm der Suite ihn ohne Prozessstart aufrufen kann.
 * **Strenge Kommandozeile:** Eine falsch geschriebene Option (`--powr`) oder ein überzähliges Wort ist ein Fehler, der sie nennt, und wird nicht ignoriert; sonst würde das Programm seine Ausgabe mit den Standardwerten erzeugen.
 * **Tests mit beschädigten Eingaben:** Die Tests füttern auch leere Dateien, Datenmüll, riesige Zahlen und abgeschnittene Dateien; keiner darf in Panik geraten.
 * **Kein Raten:** Ein unsinniger Wert ist ein Fehler, der sagt welcher und warum, nie ein Ergebnis, das nur richtig aussieht.
@@ -93,10 +93,10 @@ Wie die Teile dieses Repositorys zusammenpassen: wer es nutzt, was es enthält u
 
 ## 🔌 Schnittstellen
 
-Die Bibliothek ist `eh3d_laser_cam` (`use eh3d_laser_cam::...`); die Kommandozeile ist `eh3d-lasercam`. Die Befehle sind diese; jeder gibt sein Ergebnis auf der Standardausgabe aus und meldet einen Fehler auf der Fehlerausgabe mit einem Exit-Code ungleich null. Es gibt keinen Netzwerkzugriff.
+Die Bibliothek ist `eh3d_phoenix_laser` (`use eh3d_phoenix_laser::...`); die Kommandozeile ist `phoenix-laser`. Die Befehle sind diese; jeder gibt sein Ergebnis auf der Standardausgabe aus und meldet einen Fehler auf der Fehlerausgabe mit einem Exit-Code ungleich null. Es gibt keinen Netzwerkzugriff.
 
 ```text
-EH3D-LASER-CAM/
+EH3D-PHOENIX-LASER/
 ├── src/
 │   ├── lib.rs                                   die Bibliothek: was jeder Befehl nutzt
 │   ├── main.rs                                  die Kommandozeile
@@ -127,7 +127,7 @@ EH3D-LASER-CAM/
 
 ## ⚙️ Konfiguration
 
-Es gibt noch keine Konfigurationsdatei: Was die Person wählt, wird als Argument der Kommandozeile angegeben (siehe Schnittstellen), und jeder Standardwert steht in der Hilfe des Befehls (`eh3d-lasercam help`). Die festen Grenzen stehen als benannte Konstanten im Code und sind durch Tests abgedeckt.
+Es gibt noch keine Konfigurationsdatei: Was die Person wählt, wird als Argument der Kommandozeile angegeben (siehe Schnittstellen), und jeder Standardwert steht in der Hilfe des Befehls (`phoenix-laser help`). Die festen Grenzen stehen als benannte Konstanten im Code und sind durch Tests abgedeckt.
 
 ## 🚀 Schnellstart
 
@@ -150,14 +150,14 @@ Die Version steht in `Cargo.toml` und in `eh3d.project.json`; jede Version hat i
 ## 📂 Struktur des Repositorys
 
 <p align="center">
-  <img src="images/repository-structure.svg" alt="Struktur des Repositorys EH3D-LASER-CAM" width="100%">
+  <img src="images/repository-structure.svg" alt="Struktur des Repositorys EH3D-PHOENIX-LASER" width="100%">
 </p>
 
 <details>
 <summary>Textversion des Baums</summary>
 
 ```text
-EH3D-LASER-CAM/
+EH3D-PHOENIX-LASER/
 ├── src/
 │   ├── lib.rs                                   die Bibliothek: was jeder Befehl nutzt
 │   ├── main.rs                                  die Kommandozeile

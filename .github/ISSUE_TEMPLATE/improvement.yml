@@ -12,7 +12,7 @@ body:
     id: repository
     attributes:
       label: Primary repository
-      placeholder: EH3D-LASER-CAM
+      placeholder: EH3D-PHOENIX-LASER
     validations:
       required: true
   - type: textarea

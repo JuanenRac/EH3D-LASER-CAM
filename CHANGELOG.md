@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **Renamed:** The project is now called EH3D-PHOENIX-LASER (it was EH3D-LASER-CAM); it joins the PHOENIX family of programs.
+
 ## [0.0.3] - Audit fixes, the new reading limits, tests and the application icon
 
 - **The application icon and the logos of the program:** `images/brand/` holds the icon (SVG, PNG sizes, `.ico` and `.icns`), the horizontal and vertical logos in a light and a dark version and the social preview image.

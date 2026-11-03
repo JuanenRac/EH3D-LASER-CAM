@@ -1,5 +1,5 @@
 @echo off
-rem EH3D-LASER-CAM test launcher: the tests, shown in a live panel; the version is never changed. GPL-3.0-or-later.
+rem EH3D-PHOENIX-LASER test launcher: the tests, shown in a live panel; the version is never changed. GPL-3.0-or-later.
 rem PRETTY_RUN_BEGIN
 set "NOPAUSE=1"
 if not defined PRETTY_MODE set "PRETTY_MODE=test"

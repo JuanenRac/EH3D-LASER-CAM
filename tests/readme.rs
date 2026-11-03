@@ -3,7 +3,7 @@
 use std::path::PathBuf;
 use std::process::Command;
 
-const BIN: &str = env!("CARGO_BIN_EXE_eh3d-lasercam");
+const BIN: &str = env!("CARGO_BIN_EXE_phoenix-laser");
 
 fn root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -58,8 +58,10 @@ fn of_readme() -> Vec<Vec<String>> {
 
 /// Runs the command in the folder of the repository; a file of examples/ that does not exist yet is an output, which goes to a temporary folder instead.
 fn run(args: &[String], tag: &str) -> (bool, String, String) {
-    let dir =
-        std::env::temp_dir().join(format!("eh3d_lasercam_readme_{tag}_{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!(
+        "eh3d_phoenix_laser_readme_{tag}_{}",
+        std::process::id()
+    ));
     std::fs::create_dir_all(&dir).unwrap();
     let args: Vec<String> = args
         .iter()

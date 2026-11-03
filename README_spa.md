@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="images/EH3D_BANNER.svg" alt="EH3D-LASER-CAM banner" width="100%">
+  <img src="images/EH3D_PHOENIX_LASER_BANNER.svg" alt="EH3D-PHOENIX-LASER banner" width="100%">
 </p>
 
-# <img src="images/brand/icon-64.png" alt="" width="40" height="40" align="absmiddle"> EH3D-LASER-CAM
+# <img src="images/brand/icon-64.png" alt="" width="40" height="40" align="absmiddle"> EH3D-PHOENIX-LASER
 <p align="center"><a href="README.md">🇺🇸 English</a> | 🇪🇸 <b>Español</b> | <a href="README_fra.md">🇫🇷 Français</a> | <a href="README_ita.md">🇮🇹 Italiano</a> | <a href="README_deu.md">🇩🇪 Deutsch</a> | <a href="README_zho.md">🇨🇳 中文</a> | <a href="README_jpn.md">🇯🇵 日本語</a> | <a href="README_por.md">🇵🇹 Português</a></p>
 
 ### Grabado láser desde una imagen: tramado, G-code de trama y rejilla de calibración
@@ -17,7 +17,7 @@
 
 ---
 
-**Comprobación de honestidad - lo que funciona hoy:** una biblioteca Rust y un programa de línea de comandos (`eh3d-lasercam`) con 74 pruebas que se ejecutan en un ordenador: convierte una imagen en puntos por tramado y escribe el G-code de un láser que quema línea a línea con potencia dinámica y sobrerrecorrido, y una rejilla de prueba de potencia contra avance. Todavía no tiene ventana, no se ha probado en una máquina y no se ha comprobado con una colección de ficheros reales.
+**Comprobación de honestidad - lo que funciona hoy:** una biblioteca Rust y un programa de línea de comandos (`phoenix-laser`) con 74 pruebas que se ejecutan en un ordenador: convierte una imagen en puntos por tramado y escribe el G-code de un láser que quema línea a línea con potencia dinámica y sobrerrecorrido, y una rejilla de prueba de potencia contra avance. Todavía no tiene ventana, no se ha probado en una máquina y no se ha comprobado con una colección de ficheros reales.
 
 ---
 
@@ -45,7 +45,7 @@ Cada línea es una parte de este repositorio y la luz dice hasta dónde llega ho
 | Área | Estado | Qué significa aquí |
 |---|---|---|
 | Núcleo | 🟡 | convierte una imagen en puntos por tramado y escribe el G-code de un láser que quema línea a línea con potencia dinámica y sobrerrecorrido, y una rejilla de prueba de potencia contra avance; probado en un ordenador con entradas normales y dañadas, no con una colección de ficheros reales. |
-| Línea de comandos | 🟡 | `eh3d-lasercam` ejecuta las mismas funciones que la biblioteca e imprime el resultado; cada error vuelve como mensaje y un código de salida distinto de cero. |
+| Línea de comandos | 🟡 | `phoenix-laser` ejecuta las mismas funciones que la biblioteca e imprime el resultado; cada error vuelve como mensaje y un código de salida distinto de cero. |
 | Pruebas | 🟡 | 74 pruebas pasan (`cargo test`), con casos normales, casos límite y entradas dañadas. |
 | Seguridad | 🟡 | Rust seguro y simple (`forbid(unsafe_code)`): nada entra en pánico con los ficheros recibidos y un valor malo es un error con su motivo; sin revisión independiente. |
 | Ventana | 🔴 | Previsto: la ventana egui común a la suite; hoy solo existe la línea de comandos. |
@@ -62,12 +62,12 @@ Cada línea es una parte de este repositorio y la luz dice hasta dónde llega ho
 
 ## 🧩 Papel en EH3D
 
-EH3D-LASER-CAM es un programa de la EH3D Fabrication Suite. Hoy funciona como biblioteca y línea de comandos; su ventana, con el aspecto que comparten los demás programas de la suite, está prevista. Lee y escribe ficheros simples, así que puede usarse solo o entre los demás programas.
+EH3D-PHOENIX-LASER es un programa de la EH3D Fabrication Suite. Hoy funciona como biblioteca y línea de comandos; su ventana, con el aspecto que comparten los demás programas de la suite, está prevista. Lee y escribe ficheros simples, así que puede usarse solo o entre los demás programas.
 
 ## 🏛️ Arquitectura
 
 <p align="center">
-  <img src="images/architecture.svg" alt="Arquitectura de EH3D-LASER-CAM: quién lo usa, qué contiene y de qué depende" width="100%">
+  <img src="images/architecture.svg" alt="Arquitectura de EH3D-PHOENIX-LASER: quién lo usa, qué contiene y de qué depende" width="100%">
 </p>
 
 
@@ -75,7 +75,7 @@ Cómo encajan las partes de este repositorio: quién lo usa, qué contiene y de 
 
 ## ✨ Funciones
 
-* **Biblioteca y línea de comandos:** cada orden de `eh3d-lasercam` es una función de la biblioteca, así que otro programa de la suite puede llamarla sin lanzar un proceso.
+* **Biblioteca y línea de comandos:** cada orden de `phoenix-laser` es una función de la biblioteca, así que otro programa de la suite puede llamarla sin lanzar un proceso.
 * **Línea de comandos estricta:** una opción mal escrita (`--powr`) o una palabra de más es un error que la nombra, no algo que se ignora; si no, el programa haría su salida con los valores por defecto.
 * **Pruebas con entradas dañadas:** las pruebas también dan ficheros vacíos, basura, números enormes y ficheros cortados, y ninguna puede provocar un pánico.
 * **Sin adivinar:** un valor que no tiene sentido es un error que dice cuál y por qué, nunca un resultado que solo lo parece.
@@ -93,10 +93,10 @@ Cómo encajan las partes de este repositorio: quién lo usa, qué contiene y de 
 
 ## 🔌 Interfaces
 
-La biblioteca es `eh3d_laser_cam` (`use eh3d_laser_cam::...`); la línea de comandos es `eh3d-lasercam`. Las órdenes son estas; cada una imprime su resultado por la salida estándar e informa de un error por la salida de errores con un código de salida distinto de cero. No hay acceso a la red.
+La biblioteca es `eh3d_phoenix_laser` (`use eh3d_phoenix_laser::...`); la línea de comandos es `phoenix-laser`. Las órdenes son estas; cada una imprime su resultado por la salida estándar e informa de un error por la salida de errores con un código de salida distinto de cero. No hay acceso a la red.
 
 ```text
-EH3D-LASER-CAM/
+EH3D-PHOENIX-LASER/
 ├── src/
 │   ├── lib.rs                                   la biblioteca: lo que usa cada orden
 │   ├── main.rs                                  la línea de comandos
@@ -127,7 +127,7 @@ EH3D-LASER-CAM/
 
 ## ⚙️ Configuración
 
-Todavía no hay fichero de configuración: lo que elige la persona se da como argumentos de la línea de comandos (véase Interfaces) y cada valor por defecto está escrito en la ayuda de la orden (`eh3d-lasercam help`). Los límites fijos están en el código como constantes con nombre y las pruebas los cubren.
+Todavía no hay fichero de configuración: lo que elige la persona se da como argumentos de la línea de comandos (véase Interfaces) y cada valor por defecto está escrito en la ayuda de la orden (`phoenix-laser help`). Los límites fijos están en el código como constantes con nombre y las pruebas los cubren.
 
 ## 🚀 Inicio rápido
 
@@ -150,14 +150,14 @@ La versión está en `Cargo.toml` y en `eh3d.project.json`; cada versión tiene 
 ## 📂 Estructura del repositorio
 
 <p align="center">
-  <img src="images/repository-structure.svg" alt="Estructura del repositorio EH3D-LASER-CAM" width="100%">
+  <img src="images/repository-structure.svg" alt="Estructura del repositorio EH3D-PHOENIX-LASER" width="100%">
 </p>
 
 <details>
 <summary>Versión en texto del árbol</summary>
 
 ```text
-EH3D-LASER-CAM/
+EH3D-PHOENIX-LASER/
 ├── src/
 │   ├── lib.rs                                   la biblioteca: lo que usa cada orden
 │   ├── main.rs                                  la línea de comandos

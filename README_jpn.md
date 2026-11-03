@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="images/EH3D_BANNER.svg" alt="EH3D-LASER-CAM banner" width="100%">
+  <img src="images/EH3D_PHOENIX_LASER_BANNER.svg" alt="EH3D-PHOENIX-LASER banner" width="100%">
 </p>
 
-# <img src="images/brand/icon-64.png" alt="" width="40" height="40" align="absmiddle"> EH3D-LASER-CAM
+# <img src="images/brand/icon-64.png" alt="" width="40" height="40" align="absmiddle"> EH3D-PHOENIX-LASER
 <p align="center"><a href="README.md">🇺🇸 English</a> | <a href="README_spa.md">🇪🇸 Español</a> | <a href="README_fra.md">🇫🇷 Français</a> | <a href="README_ita.md">🇮🇹 Italiano</a> | <a href="README_deu.md">🇩🇪 Deutsch</a> | <a href="README_zho.md">🇨🇳 中文</a> | 🇯🇵 <b>日本語</b> | <a href="README_por.md">🇵🇹 Português</a></p>
 
 ### 画像からのレーザー彫刻：ディザリング、ラスター G コード、キャリブレーション格子
@@ -17,7 +17,7 @@
 
 ---
 
-**正直さの確認 - 現在実際に動くもの：** Rust ライブラリとコマンドライン プログラム（`eh3d-lasercam`）で、コンピューター上で実行される 74 件のテストがあります：画像をディザリングで点に変え、動的出力とオーバースキャンで 1 行ずつ焼くレーザーの G コードと、出力と送りのテスト格子を書き出します。ウィンドウはまだなく、機械では試しておらず、実際のファイルの集まりでも確認していません。
+**正直さの確認 - 現在実際に動くもの：** Rust ライブラリとコマンドライン プログラム（`phoenix-laser`）で、コンピューター上で実行される 74 件のテストがあります：画像をディザリングで点に変え、動的出力とオーバースキャンで 1 行ずつ焼くレーザーの G コードと、出力と送りのテスト格子を書き出します。ウィンドウはまだなく、機械では試しておらず、実際のファイルの集まりでも確認していません。
 
 ---
 
@@ -45,7 +45,7 @@
 | 領域 | 状態 | ここでの意味 |
 |---|---|---|
 | コア | 🟡 | 画像をディザリングで点に変え、動的出力とオーバースキャンで 1 行ずつ焼くレーザーの G コードと、出力と送りのテスト格子を書き出します。コンピューター上で通常入力と破損入力でテスト済み。実際のファイルの集まりでは未確認。 |
-| コマンドライン | 🟡 | `eh3d-lasercam` はライブラリと同じ関数を実行して結果を表示します。エラーはメッセージと 0 以外の終了コードで返ります。 |
+| コマンドライン | 🟡 | `phoenix-laser` はライブラリと同じ関数を実行して結果を表示します。エラーはメッセージと 0 以外の終了コードで返ります。 |
 | テスト | 🟡 | 74 件のテストが通ります（`cargo test`）。通常ケース、境界ケース、破損入力を含みます。 |
 | セキュリティ | 🟡 | 安全な Rust のみ（`forbid(unsafe_code)`）。受け取ったファイルでパニックせず、不正な値は理由付きのエラーになります。独立したレビューはありません。 |
 | ウィンドウ | 🔴 | 予定：スイート共通の egui ウィンドウ。現在はコマンドラインのみです。 |
@@ -62,12 +62,12 @@
 
 ## 🧩 EH3D での役割
 
-EH3D-LASER-CAM は EH3D Fabrication Suite のプログラムの一つです。現在はライブラリとコマンドラインとして動作し、スイートの他のプログラムと共通の外観のウィンドウは予定です。単純なファイルを読み書きするため、単独でも他のプログラムの間でも使えます。
+EH3D-PHOENIX-LASER は EH3D Fabrication Suite のプログラムの一つです。現在はライブラリとコマンドラインとして動作し、スイートの他のプログラムと共通の外観のウィンドウは予定です。単純なファイルを読み書きするため、単独でも他のプログラムの間でも使えます。
 
 ## 🏛️ アーキテクチャ
 
 <p align="center">
-  <img src="images/architecture.svg" alt="EH3D-LASER-CAM のアーキテクチャ：誰が使い、何を持ち、何に依存するか" width="100%">
+  <img src="images/architecture.svg" alt="EH3D-PHOENIX-LASER のアーキテクチャ：誰が使い、何を持ち、何に依存するか" width="100%">
 </p>
 
 
@@ -75,7 +75,7 @@ EH3D-LASER-CAM は EH3D Fabrication Suite のプログラムの一つです。�
 
 ## ✨ 機能
 
-* **ライブラリとコマンドライン：** `eh3d-lasercam` の各コマンドはライブラリの関数なので、スイートの他のプログラムがプロセスを起動せずに呼び出せます。
+* **ライブラリとコマンドライン：** `phoenix-laser` の各コマンドはライブラリの関数なので、スイートの他のプログラムがプロセスを起動せずに呼び出せます。
 * **厳密なコマンドライン：** 書き間違えたオプション（`--powr`）や余分な語は無視されず、それを名指しするエラーになります。そうでないと、プログラムは既定値で出力を作ってしまいます。
 * **破損入力のテスト：** 空のファイル、ゴミデータ、巨大な数値、途中で切れたファイルも与え、どれもパニックしてはいけません。
 * **推測しない：** 意味のない値は、どの値かと理由を示すエラーになり、見かけだけ正しい結果にはなりません。
@@ -93,10 +93,10 @@ EH3D-LASER-CAM は EH3D Fabrication Suite のプログラムの一つです。�
 
 ## 🔌 インターフェース
 
-ライブラリは `eh3d_laser_cam`（`use eh3d_laser_cam::...`）、コマンドラインは `eh3d-lasercam` です。コマンドは次のとおりで、結果は標準出力に表示され、エラーは標準エラー出力に 0 以外の終了コードで報告されます。ネットワークアクセスはありません。
+ライブラリは `eh3d_phoenix_laser`（`use eh3d_phoenix_laser::...`）、コマンドラインは `phoenix-laser` です。コマンドは次のとおりで、結果は標準出力に表示され、エラーは標準エラー出力に 0 以外の終了コードで報告されます。ネットワークアクセスはありません。
 
 ```text
-EH3D-LASER-CAM/
+EH3D-PHOENIX-LASER/
 ├── src/
 │   ├── lib.rs                                   ライブラリ：各コマンドが使うもの
 │   ├── main.rs                                  コマンドライン
@@ -127,7 +127,7 @@ EH3D-LASER-CAM/
 
 ## ⚙️ 設定
 
-設定ファイルはまだありません。選択は（インターフェースを参照）コマンドラインの引数で渡し、各既定値はコマンドのヘルプ（`eh3d-lasercam help`）に書かれています。固定の上限はコード内の名前付き定数で、テストで確認されています。
+設定ファイルはまだありません。選択は（インターフェースを参照）コマンドラインの引数で渡し、各既定値はコマンドのヘルプ（`phoenix-laser help`）に書かれています。固定の上限はコード内の名前付き定数で、テストで確認されています。
 
 ## 🚀 クイックスタート
 
@@ -150,14 +150,14 @@ cargo run --release -- engrave examples/gradient.pgm examples/gradient.nc --widt
 ## 📂 リポジトリの構成
 
 <p align="center">
-  <img src="images/repository-structure.svg" alt="EH3D-LASER-CAM のリポジトリ構成" width="100%">
+  <img src="images/repository-structure.svg" alt="EH3D-PHOENIX-LASER のリポジトリ構成" width="100%">
 </p>
 
 <details>
 <summary>ツリーのテキスト版</summary>
 
 ```text
-EH3D-LASER-CAM/
+EH3D-PHOENIX-LASER/
 ├── src/
 │   ├── lib.rs                                   ライブラリ：各コマンドが使うもの
 │   ├── main.rs                                  コマンドライン

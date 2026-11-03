@@ -1,7 +1,7 @@
-use eh3d_laser_cam::calibrate::{grid, Grid};
-use eh3d_laser_cam::dither::{dither, Dots, Method};
-use eh3d_laser_cam::image::{from_bytes, from_pgm, from_png, Gray, MAX_PIXELS};
-use eh3d_laser_cam::raster::{engrave, overscan_for, Params};
+use eh3d_phoenix_laser::calibrate::{grid, Grid};
+use eh3d_phoenix_laser::dither::{dither, Dots, Method};
+use eh3d_phoenix_laser::image::{from_bytes, from_pgm, from_png, Gray, MAX_PIXELS};
+use eh3d_phoenix_laser::raster::{engrave, overscan_for, Params};
 
 fn gray(w: usize, h: usize, v: u8) -> Gray {
     Gray::new(w, h, vec![v; w * h]).unwrap()

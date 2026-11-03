@@ -1,8 +1,8 @@
 {
-  "repo": "EH3D-LASER-CAM",
+  "repo": "EH3D-PHOENIX-LASER",
   "ecosystem": "eh3d",
   "tagline": "An image, dots, and the G-code of a laser.",
-  "description": "EH3D-LASER-CAM is a Rust library and command line that turn an image into dots by dithering and write the G-code of a laser that burns line by line with dynamic power. It has no window yet.",
+  "description": "EH3D-PHOENIX-LASER is a Rust library and command line that turn an image into dots by dithering and write the G-code of a laser that burns line by line with dynamic power. It has no window yet.",
   "columns": [
     "WHO USES IT",
     "THIS REPOSITORY",

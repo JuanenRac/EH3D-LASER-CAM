@@ -1,10 +1,10 @@
 //! More checks of the engraving: the G-code can be read back into the dots it was made from, the numbers are written the same way every time, the grid of the calibration keeps
 //! its geometry, and the command line says no to what makes no sense.
 
-use eh3d_laser_cam::calibrate::{grid, Grid, MAX_CELLS};
-use eh3d_laser_cam::dither::{dither, Dots, Method};
-use eh3d_laser_cam::image::Gray;
-use eh3d_laser_cam::raster::{engrave, overscan_for, Params};
+use eh3d_phoenix_laser::calibrate::{grid, Grid, MAX_CELLS};
+use eh3d_phoenix_laser::dither::{dither, Dots, Method};
+use eh3d_phoenix_laser::image::Gray;
+use eh3d_phoenix_laser::raster::{engrave, overscan_for, Params};
 use std::process::Command;
 
 fn dots(rows: &[&str]) -> Dots {
@@ -410,7 +410,7 @@ fn the_grid_is_the_same_every_time() {
 // ---- the command line ----
 
 fn run(args: &[&str]) -> (Option<i32>, String, String) {
-    let out = Command::new(env!("CARGO_BIN_EXE_eh3d-lasercam"))
+    let out = Command::new(env!("CARGO_BIN_EXE_phoenix-laser"))
         .args(args)
         .output()
         .expect("the program starts");
@@ -438,7 +438,7 @@ fn the_help_and_a_missing_command_are_not_errors_and_a_wrong_one_is() {
     for a in [&[][..], &["help"], &["--help"], &["-h"]] {
         let (code, out, _) = run(a);
         assert_eq!(code, Some(0));
-        assert!(out.contains("eh3d-lasercam"), "{out}");
+        assert!(out.contains("phoenix-laser"), "{out}");
     }
     let (code, _, err) = run(&["burn"]);
     assert_eq!(code, Some(1));
@@ -475,9 +475,9 @@ fn engraving_a_black_picture_counts_every_dot_and_writes_a_file_with_a_name_in_a
         .collect();
     assert!(body.starts_with("G21\nG90\nM4 S0\nF3000\n"), "{g}");
     assert!(g.ends_with("M5\nM2\n"), "{g}");
-    assert!(g.starts_with("; generator: eh3d-lasercam "), "{g}");
+    assert!(g.starts_with("; generator: phoenix-laser "), "{g}");
     assert!(g.contains("\n; units: mm (G21)\n; source: "), "{g}");
-    let hash = eh3d_laser_cam::gcode_out::sha256_hex(&std::fs::read(&img).unwrap());
+    let hash = eh3d_phoenix_laser::gcode_out::sha256_hex(&std::fs::read(&img).unwrap());
     assert!(
         g.contains(&format!(
             " sha256:{hash}\n; tools: laser, S 0-1000 (50 %)\n"
@@ -666,7 +666,7 @@ fn the_calibration_file_opens_with_the_standard_header_and_names_no_source() {
     ]);
     assert_eq!(code, Some(0), "{e}");
     let g = std::fs::read_to_string(&out).unwrap();
-    assert!(g.starts_with("; generator: eh3d-lasercam "), "{g}");
+    assert!(g.starts_with("; generator: phoenix-laser "), "{g}");
     assert!(g.contains("\n; units: mm (G21)\n; source: none\n; tools: laser, S 0-255, grid of power against feed\n"), "{g}");
     let body: Vec<&str> = g.lines().skip_while(|l| l.starts_with(';')).collect();
     assert_eq!(body[0], "G21");
@@ -677,7 +677,7 @@ fn the_calibration_file_opens_with_the_standard_header_and_names_no_source() {
 
 #[test]
 fn a_number_that_is_not_finite_never_reaches_the_file() {
-    use eh3d_laser_cam::gcode_out::number;
+    use eh3d_phoenix_laser::gcode_out::number;
     for bad in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
         assert!(number(bad).is_err());
     }

@@ -1,4 +1,4 @@
-// EH3D-LASER-CAM - command line arguments.
+// EH3D-PHOENIX-LASER - command line arguments.
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D). GPL-3.0-or-later.
 //
 // The arguments of the command line, the same way in every small utility of the suite: this file is a template that is copied, and only its first line (the name of the utility) differs

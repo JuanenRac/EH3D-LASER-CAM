@@ -1,4 +1,4 @@
-# Contributing to EH3D-LASER-CAM
+# Contributing to EH3D-PHOENIX-LASER
 
 Thank you for looking. A laser burns what it is told to, so a wrong power or a wrong position is worse than a refused job.
 

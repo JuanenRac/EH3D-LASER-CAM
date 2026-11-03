@@ -1,7 +1,7 @@
 //! The limits of the engraving: every value of the parameters at its edge, the numbers the engraving reports (rows, runs, length, time) and the shape of the lines at the ends.
 
-use eh3d_laser_cam::dither::Dots;
-use eh3d_laser_cam::raster::{engrave, overscan_for, Params};
+use eh3d_phoenix_laser::dither::Dots;
+use eh3d_phoenix_laser::raster::{engrave, overscan_for, Params};
 
 fn dots(rows: &[&str]) -> Dots {
     let (h, w) = (rows.len(), rows[0].len());

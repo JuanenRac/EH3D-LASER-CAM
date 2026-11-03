@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="images/EH3D_BANNER.svg" alt="EH3D-LASER-CAM banner" width="100%">
+  <img src="images/EH3D_PHOENIX_LASER_BANNER.svg" alt="EH3D-PHOENIX-LASER banner" width="100%">
 </p>
 
-# <img src="images/brand/icon-64.png" alt="" width="40" height="40" align="absmiddle"> EH3D-LASER-CAM
+# <img src="images/brand/icon-64.png" alt="" width="40" height="40" align="absmiddle"> EH3D-PHOENIX-LASER
 <p align="center">🇺🇸 <b>English</b> | <a href="README_spa.md">🇪🇸 Español</a> | <a href="README_fra.md">🇫🇷 Français</a> | <a href="README_ita.md">🇮🇹 Italiano</a> | <a href="README_deu.md">🇩🇪 Deutsch</a> | <a href="README_zho.md">🇨🇳 中文</a> | <a href="README_jpn.md">🇯🇵 日本語</a> | <a href="README_por.md">🇵🇹 Português</a></p>
 
 ### Laser engraving from an image: dithering, raster G-code and a calibration grid
@@ -17,7 +17,7 @@
 
 ---
 
-**Honesty check - what actually runs today:** a Rust library and a command line program (`eh3d-lasercam`) with 74 tests that run on a computer: turns an image into dots by dithering and writes the G-code of a laser that burns line by line with dynamic power and overscan, and a power-against-feed test grid. It has no window yet, it has not been tried on a machine and it has not been checked against a collection of real files.
+**Honesty check - what actually runs today:** a Rust library and a command line program (`phoenix-laser`) with 74 tests that run on a computer: turns an image into dots by dithering and writes the G-code of a laser that burns line by line with dynamic power and overscan, and a power-against-feed test grid. It has no window yet, it has not been tried on a machine and it has not been checked against a collection of real files.
 
 ---
 
@@ -45,7 +45,7 @@ Each line is one part of this repository and the light says how far it is today.
 | Area | State | What it means here |
 |---|---|---|
 | Core | 🟡 | turns an image into dots by dithering and writes the G-code of a laser that burns line by line with dynamic power and overscan, and a power-against-feed test grid; tested on a computer with normal and damaged input, not with a collection of real files. |
-| Command line | 🟡 | `eh3d-lasercam` runs the same functions as the library and prints the result; every error comes back as a message and a non-zero exit code. |
+| Command line | 🟡 | `phoenix-laser` runs the same functions as the library and prints the result; every error comes back as a message and a non-zero exit code. |
 | Tests | 🟡 | 74 tests pass (`cargo test`), with normal cases, edge cases and damaged input. |
 | Security | 🟡 | Plain safe Rust (`forbid(unsafe_code)`): nothing panics on the files it is given and a bad value is an error with its reason; no independent review. |
 | Window | 🔴 | Planned: the egui window common to the suite; today there is only the command line. |
@@ -62,12 +62,12 @@ Each line is one part of this repository and the light says how far it is today.
 
 ## 🧩 Role in EH3D
 
-EH3D-LASER-CAM is one program of the EH3D Fabrication Suite. Today it works as a library and a command line; its window, in the look the other programs of the suite share, is planned. It reads and writes plain files, so it can be used on its own or between the other programs.
+EH3D-PHOENIX-LASER is one program of the EH3D Fabrication Suite. Today it works as a library and a command line; its window, in the look the other programs of the suite share, is planned. It reads and writes plain files, so it can be used on its own or between the other programs.
 
 ## 🏛️ Architecture
 
 <p align="center">
-  <img src="images/architecture.svg" alt="EH3D-LASER-CAM architecture: who uses it, what it holds and what it depends on" width="100%">
+  <img src="images/architecture.svg" alt="EH3D-PHOENIX-LASER architecture: who uses it, what it holds and what it depends on" width="100%">
 </p>
 
 
@@ -75,7 +75,7 @@ How the parts of this repository fit together: who uses it, what it holds and wh
 
 ## ✨ Features
 
-* **A library and a command line:** every command of `eh3d-lasercam` is a function of the library, so another program of the suite can call it without starting a process.
+* **A library and a command line:** every command of `phoenix-laser` is a function of the library, so another program of the suite can call it without starting a process.
 * **Strict command line:** an option that is written wrong (`--powr`) or a word too many is an error that names it, not something to ignore; the program would otherwise make its output with the default values.
 * **Tests with damaged input:** the tests also feed empty files, garbage, huge numbers and cut files, and none of them may panic.
 * **No guessing:** a value that does not make sense is an error that says which value and why, never a result that only looks right.
@@ -93,10 +93,10 @@ How the parts of this repository fit together: who uses it, what it holds and wh
 
 ## 🔌 Interfaces
 
-The library is `eh3d_laser_cam` (`use eh3d_laser_cam::...`); the command line is `eh3d-lasercam`. The commands are these; each prints its result on the standard output and reports an error on the standard error with a non-zero exit code. There is no network access.
+The library is `eh3d_phoenix_laser` (`use eh3d_phoenix_laser::...`); the command line is `phoenix-laser`. The commands are these; each prints its result on the standard output and reports an error on the standard error with a non-zero exit code. There is no network access.
 
 ```text
-EH3D-LASER-CAM/
+EH3D-PHOENIX-LASER/
 ├── src/
 │   ├── lib.rs                                   the library: what every command uses
 │   ├── main.rs                                  the command line
@@ -127,7 +127,7 @@ EH3D-LASER-CAM/
 
 ## ⚙️ Configuration
 
-There is no configuration file yet: what a person chooses is given as arguments of the command line (see Interfaces) and every default is written in the help of the command (`eh3d-lasercam help`). The fixed limits live in the code as named constants and are covered by tests.
+There is no configuration file yet: what a person chooses is given as arguments of the command line (see Interfaces) and every default is written in the help of the command (`phoenix-laser help`). The fixed limits live in the code as named constants and are covered by tests.
 
 ## 🚀 Quick start
 
@@ -150,14 +150,14 @@ The version lives in `Cargo.toml` and in `eh3d.project.json`; each version has i
 ## 📂 Repository Structure
 
 <p align="center">
-  <img src="images/repository-structure.svg" alt="Repository structure of EH3D-LASER-CAM" width="100%">
+  <img src="images/repository-structure.svg" alt="Repository structure of EH3D-PHOENIX-LASER" width="100%">
 </p>
 
 <details>
 <summary>Text version of the tree</summary>
 
 ```text
-EH3D-LASER-CAM/
+EH3D-PHOENIX-LASER/
 ├── src/
 │   ├── lib.rs                                   the library: what every command uses
 │   ├── main.rs                                  the command line

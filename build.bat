@@ -10,7 +10,7 @@ if not defined PRETTY_RUN if exist "%~dp0tools\pretty_run.py" (
     exit /b
 )
 rem PRETTY_RUN_END
-rem Builds EH3D-LASER-CAM (release).
+rem Builds EH3D-PHOENIX-LASER (release).
 cd /d "%~dp0"
 set "TARGET_DIR=target"
 if defined CARGO_TARGET_DIR set "TARGET_DIR=%CARGO_TARGET_DIR%"
@@ -25,7 +25,7 @@ if errorlevel 1 (
     echo Build FAILED.
 ) else (
     echo.
-    echo Build OK: %TARGET_DIR%\release\eh3d-lasercam.exe
+    echo Build OK: %TARGET_DIR%\release\phoenix-laser.exe
 )
 :end
 if not defined NOPAUSE pause

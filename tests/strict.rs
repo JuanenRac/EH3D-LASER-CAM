@@ -3,7 +3,7 @@
 use std::process::Command;
 
 fn run(args: &[&str]) -> (bool, String) {
-    let out = Command::new(env!("CARGO_BIN_EXE_eh3d-lasercam"))
+    let out = Command::new(env!("CARGO_BIN_EXE_phoenix-laser"))
         .args(args)
         .output()
         .expect("the program starts");
