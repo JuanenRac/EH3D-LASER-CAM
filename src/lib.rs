@@ -7,4 +7,5 @@
 pub use eh3d_image as image;
 pub mod calibrate;
 pub mod dither;
+pub mod gcode_out;
 pub mod raster;

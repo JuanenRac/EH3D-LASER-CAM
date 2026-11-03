@@ -85,20 +85,12 @@ pub struct Engraving {
     pub seconds: f64,
 }
 
-fn n(v: f64) -> String {
-    let s = format!("{v:.3}");
-    let s = s.trim_end_matches('0').trim_end_matches('.');
-    if s == "-0" || s.is_empty() {
-        "0".to_string()
-    } else {
-        s.to_string()
-    }
-}
+use crate::gcode_out::number as n;
 
 pub fn engrave(dots: &Dots, p: &Params) -> Result<Engraving, String> {
     p.validate()?;
     let s = p.power();
-    let mut g = format!("G21\nG90\nM4 S0\nF{}\n", n(p.feed_mm_min));
+    let mut g = format!("G21\nG90\nM4 S0\nF{}\n", n(p.feed_mm_min)?);
     let (mut rows, mut runs, mut burn_mm, mut travel_mm) = (0usize, 0usize, 0.0f64, 0.0f64);
     let mut head_x = p.origin.0;
     for y in 0..dots.h {
@@ -132,25 +124,25 @@ pub fn engrave(dots: &Dots, p: &Params) -> Result<Engraving, String> {
         let first = ordered[0].0;
         let approach = first - dir * p.overscan_mm;
         travel_mm += (approach - head_x).abs();
-        g.push_str(&format!("G0 X{} Y{}\n", n(approach), n(ypos)));
+        g.push_str(&format!("G0 X{} Y{}\n", n(approach)?, n(ypos)?));
         if p.overscan_mm > 0.0 {
-            g.push_str(&format!("G1 X{} S0\n", n(first)));
+            g.push_str(&format!("G1 X{} S0\n", n(first)?));
             travel_mm += p.overscan_mm;
         }
         let mut here = first;
         for &(from, to) in &ordered {
             if (from - here).abs() > 1e-9 {
-                g.push_str(&format!("G1 X{} S0\n", n(from)));
+                g.push_str(&format!("G1 X{} S0\n", n(from)?));
                 travel_mm += (from - here).abs();
             }
-            g.push_str(&format!("G1 X{} S{s}\n", n(to)));
+            g.push_str(&format!("G1 X{} S{s}\n", n(to)?));
             burn_mm += (to - from).abs();
             runs += 1;
             here = to;
         }
         let end = here + dir * p.overscan_mm;
         if p.overscan_mm > 0.0 {
-            g.push_str(&format!("G1 X{} S0\n", n(end)));
+            g.push_str(&format!("G1 X{} S0\n", n(end)?));
             travel_mm += p.overscan_mm;
         }
         head_x = end;

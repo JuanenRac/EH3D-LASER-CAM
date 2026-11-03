@@ -21,15 +21,7 @@ impl Default for Grid {
 
 pub const MAX_CELLS: usize = 12;
 
-fn n(v: f64) -> String {
-    let s = format!("{v:.3}");
-    let s = s.trim_end_matches('0').trim_end_matches('.');
-    if s == "-0" || s.is_empty() {
-        "0".to_string()
-    } else {
-        s.to_string()
-    }
-}
+use crate::gcode_out::number as n;
 
 /// The G-code of the grid: one column for each power (a percent of full power) and one row for each feed (mm/min).
 pub fn grid(powers_percent: &[f64], feeds_mm_min: &[f64], g: &Grid) -> Result<String, String> {
@@ -80,10 +72,10 @@ pub fn grid(powers_percent: &[f64], feeds_mm_min: &[f64], g: &Grid) -> Result<St
             let s = (f64::from(g.s_max) * power / 100.0).round() as u32;
             out.push_str(&format!(
                 "(power {}% feed {})\nG0 X{} Y{}\n",
-                n(*power),
-                n(*feed),
-                n(x0),
-                n(y0)
+                n(*power)?,
+                n(*feed)?,
+                n(x0)?,
+                n(y0)?
             ));
             for k in 0..lines {
                 let y = y0 + (k as f64 * g.line_spacing_mm).min(g.square_mm);
@@ -92,8 +84,8 @@ pub fn grid(powers_percent: &[f64], feeds_mm_min: &[f64], g: &Grid) -> Result<St
                 } else {
                     (x0 + g.square_mm, x0)
                 };
-                out.push_str(&format!("G1 X{} Y{} S0 F{}\n", n(a), n(y), n(*feed)));
-                out.push_str(&format!("G1 X{} S{s} F{}\n", n(b), n(*feed)));
+                out.push_str(&format!("G1 X{} Y{} S0 F{}\n", n(a)?, n(y)?, n(*feed)?));
+                out.push_str(&format!("G1 X{} S{s} F{}\n", n(b)?, n(*feed)?));
             }
         }
     }
