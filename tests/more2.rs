@@ -8,7 +8,10 @@ fn dots(rows: &[&str]) -> Dots {
     Dots {
         w,
         h,
-        burn: rows.iter().flat_map(|r| r.chars().map(|c| c == '#')).collect(),
+        burn: rows
+            .iter()
+            .flat_map(|r| r.chars().map(|c| c == '#'))
+            .collect(),
     }
 }
 
@@ -84,9 +87,30 @@ fn a_value_that_is_not_a_number_is_refused_in_every_field() {
 fn the_power_is_zero_at_zero_percent_the_whole_s_max_at_a_hundred_and_rounds_in_between() {
     assert_eq!(with(|q| q.power_percent = 0.0).power(), 0);
     assert_eq!(with(|q| q.power_percent = 100.0).power(), 1000);
-    assert_eq!(with(|q| { q.s_max = 255; q.power_percent = 50.0 }).power(), 128);
-    assert_eq!(with(|q| { q.s_max = 1; q.power_percent = 49.0 }).power(), 0);
-    assert_eq!(with(|q| { q.s_max = 1; q.power_percent = 50.0 }).power(), 1);
+    assert_eq!(
+        with(|q| {
+            q.s_max = 255;
+            q.power_percent = 50.0
+        })
+        .power(),
+        128
+    );
+    assert_eq!(
+        with(|q| {
+            q.s_max = 1;
+            q.power_percent = 49.0
+        })
+        .power(),
+        0
+    );
+    assert_eq!(
+        with(|q| {
+            q.s_max = 1;
+            q.power_percent = 50.0
+        })
+        .power(),
+        1
+    );
     assert_eq!(Params::default().power(), 500);
 }
 
@@ -121,7 +145,10 @@ fn two_runs_in_a_row_are_two_burning_moves_with_a_move_with_the_laser_off_betwee
     let e = engrave(&dots(&["##..##"]), &p()).unwrap();
     assert_eq!((e.rows, e.runs), (1, 2));
     let lines: Vec<&str> = e.gcode.lines().collect();
-    let at = lines.iter().position(|l| *l == "G1 X2 S500").expect("first run");
+    let at = lines
+        .iter()
+        .position(|l| *l == "G1 X2 S500")
+        .expect("first run");
     assert_eq!(lines[at + 1], "G1 X4 S0");
     assert_eq!(lines[at + 2], "G1 X6 S500");
 }
@@ -130,9 +157,17 @@ fn two_runs_in_a_row_are_two_burning_moves_with_a_move_with_the_laser_off_betwee
 fn the_overscan_is_added_at_both_ends_of_every_line_and_only_when_it_is_more_than_zero() {
     let with_overscan = engrave(&dots(&["..##.."]), &with(|q| q.overscan_mm = 3.0)).unwrap();
     // the approach is 3 mm before the first dot, and the head runs 3 mm past the last
-    assert!(with_overscan.gcode.contains("G0 X-1 Y0\n"), "{}", with_overscan.gcode);
+    assert!(
+        with_overscan.gcode.contains("G0 X-1 Y0\n"),
+        "{}",
+        with_overscan.gcode
+    );
     assert!(with_overscan.gcode.contains("G1 X2 S0\n"));
-    assert!(with_overscan.gcode.contains("G1 X7 S0\n"), "{}", with_overscan.gcode);
+    assert!(
+        with_overscan.gcode.contains("G1 X7 S0\n"),
+        "{}",
+        with_overscan.gcode
+    );
     let none = engrave(&dots(&["..##.."]), &p()).unwrap();
     assert!(!none.gcode.contains("G1 X7 S0"));
     assert!(with_overscan.seconds > none.seconds);
@@ -184,7 +219,8 @@ fn the_run_up_grows_with_the_square_of_the_feed_and_falls_with_the_acceleration(
 }
 
 #[test]
-fn the_program_always_starts_with_the_units_the_absolute_mode_and_dynamic_power_and_ends_with_the_laser_off() {
+fn the_program_always_starts_with_the_units_the_absolute_mode_and_dynamic_power_and_ends_with_the_laser_off(
+) {
     let e = engrave(&dots(&["#.#", ".#."]), &p()).unwrap();
     assert!(e.gcode.starts_with("G21\nG90\nM4 S0\nF600\n"));
     assert!(e.gcode.ends_with("M5\nM2\n"));
@@ -194,7 +230,11 @@ fn the_program_always_starts_with_the_units_the_absolute_mode_and_dynamic_power_
 
 #[test]
 fn the_laser_is_off_whenever_the_head_moves_without_burning() {
-    let e = engrave(&dots(&["#..#", ".##.", "#..#"]), &with(|q| q.overscan_mm = 2.0)).unwrap();
+    let e = engrave(
+        &dots(&["#..#", ".##.", "#..#"]),
+        &with(|q| q.overscan_mm = 2.0),
+    )
+    .unwrap();
     for line in e.gcode.lines() {
         if line.starts_with("G0 ") {
             assert!(!line.contains(" S"), "a rapid with a power: {line}");

@@ -109,10 +109,18 @@ fn run(mut args: Vec<String>) -> Result<(), String> {
                 print!("dry run, nothing written: ");
             } else {
                 // the standard header: the generator, the units, the picture it was made from with its hash, and the laser
-                let name = std::path::Path::new(&args[0]).file_name().map_or(args[0].clone(), |n| n.to_string_lossy().into_owned());
+                let name = std::path::Path::new(&args[0])
+                    .file_name()
+                    .map_or(args[0].clone(), |n| n.to_string_lossy().into_owned());
                 let tools = format!("laser, S 0-{} ({} %)", p.s_max, p.power_percent);
-                let head = header(&Header { generator: "eh3d-lasercam", version: env!("CARGO_PKG_VERSION"), source: Some((&name, sha256_hex(&bytes))), tools: &tools });
-                fs::write(&args[1], format!("{head}{}", e.gcode)).map_err(|er| format!("{}: {er}", args[1]))?;
+                let head = header(&Header {
+                    generator: "eh3d-lasercam",
+                    version: env!("CARGO_PKG_VERSION"),
+                    source: Some((&name, sha256_hex(&bytes))),
+                    tools: &tools,
+                });
+                fs::write(&args[1], format!("{head}{}", e.gcode))
+                    .map_err(|er| format!("{}: {er}", args[1]))?;
             }
             println!("{} x {} dots ({:.1} x {:.1} mm), {} lines, {} runs, {:.0} mm burned, about {:.0} s", dots.w, dots.h, dots.w as f64 * p.pixel_mm, dots.h as f64 * p.pixel_mm, e.rows, e.runs, e.burn_mm, e.seconds);
             Ok(())
@@ -132,8 +140,14 @@ fn run(mut args: Vec<String>) -> Result<(), String> {
             }
             finish(&args, 1)?;
             let out = args.first().ok_or("calibrate needs an output file")?;
-            let head = header(&Header { generator: "eh3d-lasercam", version: env!("CARGO_PKG_VERSION"), source: None, tools: &format!("laser, S 0-{}, grid of power against feed", g.s_max) });
-            fs::write(out, format!("{head}{}", grid(&powers, &feeds, &g)?)).map_err(|e| format!("{out}: {e}"))?;
+            let head = header(&Header {
+                generator: "eh3d-lasercam",
+                version: env!("CARGO_PKG_VERSION"),
+                source: None,
+                tools: &format!("laser, S 0-{}, grid of power against feed", g.s_max),
+            });
+            fs::write(out, format!("{head}{}", grid(&powers, &feeds, &g)?))
+                .map_err(|e| format!("{out}: {e}"))?;
             println!("{} squares written to {out}", powers.len() * feeds.len());
             Ok(())
         }

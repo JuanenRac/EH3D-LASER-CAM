@@ -468,13 +468,22 @@ fn engraving_a_black_picture_counts_every_dot_and_writes_a_file_with_a_name_in_a
     );
     let g = std::fs::read_to_string(&out).unwrap();
     // the file opens with the standard header (comment lines), then the program
-    let body: String = g.lines().skip_while(|l| l.starts_with(';')).map(|l| format!("{l}\n")).collect();
+    let body: String = g
+        .lines()
+        .skip_while(|l| l.starts_with(';'))
+        .map(|l| format!("{l}\n"))
+        .collect();
     assert!(body.starts_with("G21\nG90\nM4 S0\nF3000\n"), "{g}");
     assert!(g.ends_with("M5\nM2\n"), "{g}");
     assert!(g.starts_with("; generator: eh3d-lasercam "), "{g}");
     assert!(g.contains("\n; units: mm (G21)\n; source: "), "{g}");
     let hash = eh3d_laser_cam::gcode_out::sha256_hex(&std::fs::read(&img).unwrap());
-    assert!(g.contains(&format!(" sha256:{hash}\n; tools: laser, S 0-1000 (50 %)\n")), "{g}");
+    assert!(
+        g.contains(&format!(
+            " sha256:{hash}\n; tools: laser, S 0-1000 (50 %)\n"
+        )),
+        "{g}"
+    );
     std::fs::remove_file(&out).unwrap();
 }
 
@@ -645,7 +654,16 @@ fn the_calibration_and_the_info_commands_report_their_errors() {
 fn the_calibration_file_opens_with_the_standard_header_and_names_no_source() {
     let out = tmp("more-header-grid.nc");
     let _ = std::fs::remove_file(&out);
-    let (code, _, e) = run(&["calibrate", &out, "--powers", "20,40", "--feeds", "1000", "--smax", "255"]);
+    let (code, _, e) = run(&[
+        "calibrate",
+        &out,
+        "--powers",
+        "20,40",
+        "--feeds",
+        "1000",
+        "--smax",
+        "255",
+    ]);
     assert_eq!(code, Some(0), "{e}");
     let g = std::fs::read_to_string(&out).unwrap();
     assert!(g.starts_with("; generator: eh3d-lasercam "), "{g}");
@@ -664,7 +682,11 @@ fn a_number_that_is_not_finite_never_reaches_the_file() {
         assert!(number(bad).is_err());
     }
     // the same formatter writes the engraving, so a value the checks let through would be refused there
-    let d = Dots { w: 1, h: 1, burn: vec![true] };
+    let d = Dots {
+        w: 1,
+        h: 1,
+        burn: vec![true],
+    };
     let p = Params {
         origin: (f64::NAN, 0.0),
         ..Params::default()
