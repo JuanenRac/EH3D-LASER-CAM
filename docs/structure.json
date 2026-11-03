@@ -92,6 +92,19 @@
           }
         },
         {
+          "name": "gcode_out.rs",
+          "desc": {
+            "en": "the one way a G-code number is written and the standard header",
+            "es": "la única forma de escribir un número de G-code y la cabecera estándar",
+            "de": "die einzige Schreibweise einer G-Code-Zahl und der Standardkopf",
+            "fr": "la seule façon d'écrire un nombre de G-code et l'en-tête standard",
+            "it": "l'unico modo di scrivere un numero G-code e l'intestazione standard",
+            "ja": "G コードの数値の書き方とヘッダーを一つに",
+            "zh": "G 代码数字的唯一写法和标准文件头",
+            "pt": "a única forma de escrever um número de G-code e o cabeçalho padrão"
+          }
+        },
+        {
           "name": "raster.rs",
           "desc": {
             "en": "a part of the logic",

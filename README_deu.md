@@ -58,6 +58,7 @@ Jede Zeile ist ein Teil dieses Repositorys, und die Ampel sagt, wie weit er heut
 * **Das Bild** (`eh3d-image`): PNG (Grau, Farbe, transparent, 8 oder 16 Bit) und PGM (Text und binär) werden zu Graustufen, transparente Teile als Weiß, die Größe ist begrenzt, damit eine feindliche Datei keine Gigabytes verlangen kann; `resize` mittelt die Pixel, sodass ein Punkt so groß wie der Strahl ist.
 * **Die Punkte** (`src/dither.rs`): ein Schwellwert oder Fehlerdiffusion nach Floyd-Steinberg oder Atkinson; die Tests prüfen, dass die Dunkelheit eines Grautons erhalten bleibt (ein mittleres Grau brennt etwa die Hälfte der Punkte) und dass Weiß nichts und Schwarz alles brennt.
 * **Der Laser** (`src/raster.rs`, `src/calibrate.rs`): Zeile für Zeile, von links nach rechts und dann von rechts nach links, `M4` mit `S0` beim Verfahren und der gewählten Leistung beim Brennen, ein fester oder aus der Beschleunigung berechneter Überlauf (v zum Quadrat durch 2a) und ein Raster aus Quadraten mit einer Leistung je Spalte und einem Vorschub je Zeile, um das Passende für ein Material zu finden.
+* **Der Kopf und die Zahlen jeder G-Code-Datei** (`src/gcode_out.rs`): Die Datei beginnt mit Kommentarzeilen, die den Generator und seine Version, die Einheiten (mm, G21), das Bild, aus dem sie entstand, mit seinem SHA-256 und die Werkzeuge (den Laser und seine Leistung) nennen; ein Kalibrierraster gibt an, dass es keine Quelle hat. Eine Zahl wird nur auf eine Weise geschrieben (höchstens drei Dezimalstellen, kein `-0`), und ein Wert, der nicht endlich ist, wird abgelehnt, statt als `NaN` oder `inf` geschrieben zu werden.
 * **`--dry-run`:** `engrave` berechnet das Ergebnis und zählt es (Punkte, Zeilen, Läufe, gebrannte Länge, Zeit), ohne die Ausgabedatei zu schreiben, die dann entfallen darf.
 
 ## 🧩 Rolle in EH3D
@@ -103,6 +104,7 @@ EH3D-LASER-CAM/
 │   ├── calibrate.rs                             ein Teil der Logik
 │   ├── cli_args.rs                              die Argumente der Kommandozeile, dieselbe Datei in jedem kleinen Werkzeug
 │   ├── dither.rs                                ein Teil der Logik
+│   ├── gcode_out.rs                             die einzige Schreibweise einer G-Code-Zahl und der Standardkopf
 │   └── raster.rs                                ein Teil der Logik
 ├── tests/
 │   ├── dry_run.rs                               Tests von --dry-run: zählt dasselbe und schreibt nichts
@@ -163,7 +165,7 @@ EH3D-LASER-CAM/
 │   ├── calibrate.rs                             ein Teil der Logik
 │   ├── cli_args.rs                              die Argumente der Kommandozeile, dieselbe Datei in jedem kleinen Werkzeug
 │   ├── dither.rs                                ein Teil der Logik
-│   ├── image.rs                                 ein Teil der Logik
+│   ├── gcode_out.rs                             die einzige Schreibweise einer G-Code-Zahl und der Standardkopf
 │   └── raster.rs                                ein Teil der Logik
 ├── tests/
 │   ├── dry_run.rs                               Tests von --dry-run: zählt dasselbe und schreibt nichts

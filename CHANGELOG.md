@@ -3,8 +3,11 @@
 All notable changes to this project are documented here.
 
 ## [Unreleased]
+- **Every G-code file opens with a standard header:** comment lines with the generator and its version, the units (mm, G21), the picture it was made from with its SHA-256 and the tools (the laser and its power); the calibration grid says it has no source. The library functions keep returning the program alone, so the header belongs to the files the command line writes.
+- **One way to write a number, and no `NaN` or `inf` in a file:** the engraving and the calibration grid write every number with the same function (`gcode_out::number`: three decimals at most, no `-0`), and a value that is not finite is an error. The SHA-256 used by the header is written in the program itself (no new dependency) and checked against the known test vectors.
 - **The reader of pictures comes from EH3D-COMMON (`eh3d-image`):** the program no longer keeps its own copy of the PGM and PNG reader; it takes it by path from the sibling repository, which must be cloned beside this one. `eh3d_*::image` keeps working as before. The manifest names EH3D-COMMON in `depends_on` and the CI checks it out.
 - **More tests:** the G-code read back into the dots it was made from, the limits of the head and of every value, the calibration grid square by square, and the command line with its errors and file names in any script.
+- **The workflows are hardened:** every action is pinned by its commit with its version in a comment, and the checkouts keep no credentials.
 
 ## [0.0.2] - Dry run for engraving
 

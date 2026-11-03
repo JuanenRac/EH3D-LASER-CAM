@@ -58,6 +58,7 @@ Cada línea es una parte de este repositorio y la luz dice hasta dónde llega ho
 * **La imagen** (`eh3d-image`): PNG (gris, color, transparente, 8 o 16 bits) y PGM (texto y binario) se convierten en niveles de gris, con las partes transparentes como blanco y el tamaño limitado para que un fichero hostil no pida gigabytes; `resize` promedia los píxeles para que un punto sea tan grande como el haz.
 * **Los puntos** (`src/dither.rs`): umbral, o difusión de error de Floyd-Steinberg o Atkinson; las pruebas comprueban que se conserva la oscuridad de un gris (un gris medio quema la mitad de los puntos) y que el blanco no quema nada y el negro lo quema todo.
 * **El láser** (`src/raster.rs`, `src/calibrate.rs`): una línea tras otra, de izquierda a derecha y luego de derecha a izquierda, `M4` con `S0` mientras viaja y la potencia elegida donde quema, un sobrerrecorrido fijo o calculado con la aceleración (v al cuadrado entre 2a) y una rejilla de cuadrados con una potencia por columna y un avance por fila para hallar lo que conviene a un material.
+* **La cabecera y los números de todo fichero de G-code** (`src/gcode_out.rs`): el fichero empieza con líneas de comentario que dicen el generador y su versión, las unidades (mm, G21), la imagen de la que se hizo con su SHA-256 y las herramientas (el láser y su potencia); una rejilla de calibración dice que no tiene origen. Un número se escribe de una sola manera (como mucho tres decimales, sin `-0`) y un valor que no es finito se rechaza en vez de escribirse como `NaN` o `inf`.
 * **`--dry-run`:** `engrave` calcula el resultado y lo cuenta (puntos, líneas, tramos, longitud quemada, tiempo) sin escribir el fichero de salida, que entonces puede omitirse.
 
 ## 🧩 Papel en EH3D
@@ -103,6 +104,7 @@ EH3D-LASER-CAM/
 │   ├── calibrate.rs                             una parte de la lógica
 │   ├── cli_args.rs                              los argumentos de la línea de comandos, el mismo fichero en cada utilidad pequeña
 │   ├── dither.rs                                una parte de la lógica
+│   ├── gcode_out.rs                             la única forma de escribir un número de G-code y la cabecera estándar
 │   └── raster.rs                                una parte de la lógica
 ├── tests/
 │   ├── dry_run.rs                               pruebas de --dry-run: cuenta lo mismo y no escribe nada
@@ -163,7 +165,7 @@ EH3D-LASER-CAM/
 │   ├── calibrate.rs                             una parte de la lógica
 │   ├── cli_args.rs                              los argumentos de la línea de comandos, el mismo fichero en cada utilidad pequeña
 │   ├── dither.rs                                una parte de la lógica
-│   ├── image.rs                                 una parte de la lógica
+│   ├── gcode_out.rs                             la única forma de escribir un número de G-code y la cabecera estándar
 │   └── raster.rs                                una parte de la lógica
 ├── tests/
 │   ├── dry_run.rs                               pruebas de --dry-run: cuenta lo mismo y no escribe nada

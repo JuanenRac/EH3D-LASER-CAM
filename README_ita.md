@@ -58,6 +58,7 @@ Ogni riga è una parte di questo repository e il semaforo dice a che punto è og
 * **L'immagine** (`eh3d-image`): PNG (grigio, colore, trasparente, 8 o 16 bit) e PGM (testo e binario) diventano livelli di grigio, con le parti trasparenti come bianco e la dimensione limitata perché un file ostile non possa chiedere gigabyte; `resize` fa la media dei pixel così che un punto sia grande quanto il fascio.
 * **I punti** (`src/dither.rs`): una soglia o la diffusione dell'errore di Floyd-Steinberg o Atkinson; i test verificano che l'oscurità di un grigio si conservi (un grigio medio brucia circa metà dei punti) e che il bianco non bruci nulla e il nero tutto.
 * **Il laser** (`src/raster.rs`, `src/calibrate.rs`): una riga dopo l'altra, da sinistra a destra e poi da destra a sinistra, `M4` con `S0` durante lo spostamento e la potenza scelta dove brucia, un overscan fisso o calcolato dall'accelerazione (v al quadrato su 2a) e una griglia di quadrati con una potenza per colonna e un avanzamento per riga per trovare ciò che si adatta a un materiale.
+* **L'intestazione e i numeri di ogni file G-code** (`src/gcode_out.rs`): il file si apre con righe di commento che dicono il generatore e la sua versione, le unità (mm, G21), l'immagine da cui è nato con il suo SHA-256 e gli utensili (il laser e la sua potenza); una griglia di calibrazione dice di non avere origine. Un numero si scrive in un solo modo (al massimo tre decimali, niente `-0`) e un valore non finito viene rifiutato invece di essere scritto come `NaN` o `inf`.
 * **`--dry-run`:** `engrave` calcola il risultato e lo conta (punti, righe, tratti, lunghezza bruciata, tempo) senza scrivere il file di uscita, che allora può essere omesso.
 
 ## 🧩 Ruolo in EH3D
@@ -103,6 +104,7 @@ EH3D-LASER-CAM/
 │   ├── calibrate.rs                             una parte della logica
 │   ├── cli_args.rs                              gli argomenti della riga di comando, lo stesso file in ogni piccola utilità
 │   ├── dither.rs                                una parte della logica
+│   ├── gcode_out.rs                             l'unico modo di scrivere un numero G-code e l'intestazione standard
 │   └── raster.rs                                una parte della logica
 ├── tests/
 │   ├── dry_run.rs                               test di --dry-run: conta lo stesso e non scrive nulla
@@ -163,7 +165,7 @@ EH3D-LASER-CAM/
 │   ├── calibrate.rs                             una parte della logica
 │   ├── cli_args.rs                              gli argomenti della riga di comando, lo stesso file in ogni piccola utilità
 │   ├── dither.rs                                una parte della logica
-│   ├── image.rs                                 una parte della logica
+│   ├── gcode_out.rs                             l'unico modo di scrivere un numero G-code e l'intestazione standard
 │   └── raster.rs                                una parte della logica
 ├── tests/
 │   ├── dry_run.rs                               test di --dry-run: conta lo stesso e non scrive nulla

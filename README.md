@@ -58,6 +58,7 @@ Each line is one part of this repository and the light says how far it is today.
 * **The image** (`eh3d-image`): PNG (grey, colour, transparent, 8 or 16 bits) and PGM (text and binary) become grey levels, with transparent parts as white and the size limited so that a hostile file cannot ask for gigabytes; `resize` averages the pixels so that one dot is as big as the beam.
 * **The dots** (`src/dither.rs`): a threshold, Floyd-Steinberg or Atkinson error diffusion; the tests check that the darkness of a grey is kept (a mid grey burns about half of the dots) and that white burns nothing and black burns everything.
 * **The laser** (`src/raster.rs`, `src/calibrate.rs`): one line after another, left to right and then right to left, `M4` with `S0` while it travels and the chosen power where it burns, an overscan fixed or worked out from the acceleration (v squared over 2a), and a grid of squares with a power for each column and a feed for each row to find what suits a material.
+* **The header and the numbers of every G-code file** (`src/gcode_out.rs`): the file opens with comment lines that say the generator and its version, the units (mm, G21), the picture it was made from with its SHA-256, and the tools (the laser and its power); a calibration grid says it has no source. A number is written one way only (at most three decimals, no `-0`) and a value that is not finite is refused instead of being written as `NaN` or `inf`.
 * **`--dry-run`:** `engrave` works the result out and counts it (dots, lines, runs, burnt length, time) without writing the output file, which may then be left out.
 
 ## 🧩 Role in EH3D
@@ -103,6 +104,7 @@ EH3D-LASER-CAM/
 │   ├── calibrate.rs                             a part of the logic
 │   ├── cli_args.rs                              the arguments of the command line, the same file in every small utility
 │   ├── dither.rs                                a part of the logic
+│   ├── gcode_out.rs                             the one way a G-code number is written and the standard header
 │   └── raster.rs                                a part of the logic
 ├── tests/
 │   ├── dry_run.rs                               tests of --dry-run: it counts the same and writes nothing
@@ -163,7 +165,7 @@ EH3D-LASER-CAM/
 │   ├── calibrate.rs                             a part of the logic
 │   ├── cli_args.rs                              the arguments of the command line, the same file in every small utility
 │   ├── dither.rs                                a part of the logic
-│   ├── image.rs                                 a part of the logic
+│   ├── gcode_out.rs                             the one way a G-code number is written and the standard header
 │   └── raster.rs                                a part of the logic
 ├── tests/
 │   ├── dry_run.rs                               tests of --dry-run: it counts the same and writes nothing
