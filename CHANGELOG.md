@@ -3,6 +3,9 @@
 All notable changes to this project are documented here.
 
 ## [Unreleased]
+
+## [0.0.3] - Audit fixes, the new reading limits, tests and the application icon
+
 - **The application icon and the logos of the program:** `images/brand/` holds the icon (SVG, PNG sizes, `.ico` and `.icns`), the horizontal and vertical logos in a light and a dark version and the social preview image.
 - **Shared checks updated:** the validator also compares the badge and the Version row of the README with the manifest, fails when one of its checks cannot run, and the CHANGELOG step of the workflow reads the base branch from the environment.
 - **Every G-code file opens with a standard header:** comment lines with the generator and its version, the units (mm, G21), the picture it was made from with its SHA-256 and the tools (the laser and its power); the calibration grid says it has no source. The library functions keep returning the program alone, so the header belongs to the files the command line writes.
