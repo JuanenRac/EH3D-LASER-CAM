@@ -8,6 +8,7 @@ All notable changes to this project are documented here.
 - **The reader of pictures comes from EH3D-COMMON (`eh3d-image`):** the program no longer keeps its own copy of the PGM and PNG reader; it takes it by path from the sibling repository, which must be cloned beside this one. `eh3d_*::image` keeps working as before. The manifest names EH3D-COMMON in `depends_on` and the CI checks it out.
 - **More tests:** the G-code read back into the dots it was made from, the limits of the head and of every value, the calibration grid square by square, and the command line with its errors and file names in any script.
 - **The workflows are hardened:** every action is pinned by its commit with its version in a comment, and the checkouts keep no credentials.
+- **More tests of the limits:** every value of the parameters at its edges, what the engraving reports, and the shape of the lines at the ends.
 
 ## [0.0.2] - Dry run for engraving
 

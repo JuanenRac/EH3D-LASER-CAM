@@ -665,7 +665,9 @@ fn a_number_that_is_not_finite_never_reaches_the_file() {
     }
     // the same formatter writes the engraving, so a value the checks let through would be refused there
     let d = Dots { w: 1, h: 1, burn: vec![true] };
-    let mut p = Params::default();
-    p.origin = (f64::NAN, 0.0);
+    let p = Params {
+        origin: (f64::NAN, 0.0),
+        ..Params::default()
+    };
     assert!(engrave(&d, &p).is_err());
 }
