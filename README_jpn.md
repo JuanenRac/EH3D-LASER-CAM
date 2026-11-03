@@ -2,8 +2,7 @@
   <img src="images/EH3D_BANNER.svg" alt="EH3D-LASER-CAM banner" width="100%">
 </p>
 
-# 📖 EH3D-LASER-CAM
-
+# <img src="images/brand/icon-64.png" alt="" width="40" height="40" align="absmiddle"> EH3D-LASER-CAM
 <p align="center"><a href="README.md">🇺🇸 English</a> | <a href="README_spa.md">🇪🇸 Español</a> | <a href="README_fra.md">🇫🇷 Français</a> | <a href="README_ita.md">🇮🇹 Italiano</a> | <a href="README_deu.md">🇩🇪 Deutsch</a> | <a href="README_zho.md">🇨🇳 中文</a> | 🇯🇵 <b>日本語</b> | <a href="README_por.md">🇵🇹 Português</a></p>
 
 ### 画像からのレーザー彫刻：ディザリング、ラスター G コード、キャリブレーション格子

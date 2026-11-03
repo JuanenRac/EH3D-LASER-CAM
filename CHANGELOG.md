@@ -3,6 +3,7 @@
 All notable changes to this project are documented here.
 
 ## [Unreleased]
+- **The application icon and the logos of the program:** `images/brand/` holds the icon (SVG, PNG sizes, `.ico` and `.icns`), the horizontal and vertical logos in a light and a dark version and the social preview image.
 - **Shared checks updated:** the validator also compares the badge and the Version row of the README with the manifest, fails when one of its checks cannot run, and the CHANGELOG step of the workflow reads the base branch from the environment.
 - **Every G-code file opens with a standard header:** comment lines with the generator and its version, the units (mm, G21), the picture it was made from with its SHA-256 and the tools (the laser and its power); the calibration grid says it has no source. The library functions keep returning the program alone, so the header belongs to the files the command line writes.
 - **One way to write a number, and no `NaN` or `inf` in a file:** the engraving and the calibration grid write every number with the same function (`gcode_out::number`: three decimals at most, no `-0`), and a value that is not finite is an error. The SHA-256 used by the header is written in the program itself (no new dependency) and checked against the known test vectors.
