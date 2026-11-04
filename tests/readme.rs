@@ -109,5 +109,5 @@ fn the_sample_command_works() {
 #[test]
 fn the_help_runs() {
     let (ok, out, _) = run(&["help".to_string()], "help");
-    assert!(ok && out.contains("eh3d-"), "{out}");
+    assert!(ok && out.contains("phoenix-laser"), "{out}");
 }
