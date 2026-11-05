@@ -140,6 +140,10 @@ cargo run --release --features gui   # the window
 
 版本号位于 `Cargo.toml` 和 `eh3d.project.json`；每个版本在 [CHANGELOG.md](CHANGELOG.md) 中都有条目。`build.bat` / `build.sh` 构建程序，`test.bat` / `test.sh` 运行测试，`run.bat` / `run.sh` 用示例运行。版本发布在 GitHub 上。
 
+**下载：** 本仓库的每个版本都会发布适用于各系统的现成程序：Windows（64 位和 32 位）、Linux（64 位）以及 macOS（Apple 芯片和 Intel）。每个软件包（`phoenix-laser-<版本>-<系统>.zip` 或 `.tar.gz`）包含程序、许可证、本 README、更新日志、图标和示例文件，并附带其 `.sha256` 文件；该版本还在 `SHA256SUMS` 和 `build-manifest.json` 中列出所有文件。目前尚未发布任何版本。
+
+**已签名且可校验：** 版本中的软件包使用 EH3D 的发布密钥签名，每个软件包旁边都会发布其 `.sig` 文件（OpenSSH 签名，命名空间 `eh3d-release`）。运行下载的文件之前请先校验：比较其 SHA-256（`sha256sum -c phoenix-laser-<版本>-<系统>.tar.gz.sha256`，Windows 上用 `Get-FileHash`），并用 `ssh-keygen -Y verify -f allowed_signers -I eh3d-release -n eh3d-release -s <软件包>.sig < <软件包>` 验证签名，其中 `allowed_signers` 含有一行 `eh3d-release <密钥类型> <EH3D 发布公钥>`。
+
 ## 📂 仓库结构
 
 <p align="center">

@@ -140,6 +140,10 @@ Die Suite hat 294 Tests (`cargo test`, in der CI unter Windows und Linux). Sie p
 
 Die Version steht in `Cargo.toml` und in `eh3d.project.json`; jede Version hat ihren Eintrag in [CHANGELOG.md](CHANGELOG.md). `build.bat` / `build.sh` bauen das Programm, `test.bat` / `test.sh` führen die Tests aus und `run.bat` / `run.sh` starten es mit einem Beispiel. Releases erscheinen auf GitHub.
 
+**Downloads:** Mit jeder Version dieses Repositorys werden fertige Programme für jedes System veröffentlicht: Windows (64 und 32 Bit), Linux (64 Bit) und macOS (Apple Silicon und Intel). Jedes Paket, `phoenix-laser-<Version>-<System>.zip` oder `.tar.gz`, enthält das Programm, die Lizenz, diese README, das Änderungsprotokoll, das Symbol und die Beispieldateien und kommt mit seiner `.sha256`-Datei; die Version listet außerdem jede Datei in `SHA256SUMS` und `build-manifest.json` auf. Bisher wurde noch keine Version veröffentlicht.
+
+**Signiert und prüfbar:** Die Pakete einer Version werden mit dem Release-Schlüssel von EH3D signiert, und die `.sig`-Datei jedes Pakets liegt daneben (eine OpenSSH-Signatur, Namespace `eh3d-release`). Prüfe einen Download, bevor du ihn startest: Vergleiche seine SHA-256 (`sha256sum -c phoenix-laser-<Version>-<System>.tar.gz.sha256`, unter Windows `Get-FileHash`) und prüfe die Signatur mit `ssh-keygen -Y verify -f allowed_signers -I eh3d-release -n eh3d-release -s <Paket>.sig < <Paket>`; `allowed_signers` enthält die Zeile `eh3d-release <Schlüsseltyp> <öffentlicher Schlüssel der EH3D-Releases>`.
+
 ## 📂 Struktur des Repositorys
 
 <p align="center">

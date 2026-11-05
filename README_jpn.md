@@ -140,6 +140,10 @@ cargo run --release --features gui   # the window
 
 バージョンは `Cargo.toml` と `eh3d.project.json` にあり、各バージョンは [CHANGELOG.md](CHANGELOG.md) に項目があります。`build.bat` / `build.sh` でビルド、`test.bat` / `test.sh` でテスト、`run.bat` / `run.sh` でサンプル実行します。リリースは GitHub で公開されます。
 
+**ダウンロード:** このリポジトリのリリースごとに、各システム向けのビルド済みプログラムが公開されます。Windows (64 ビットと 32 ビット)、Linux (64 ビット)、macOS (Apple シリコンと Intel) です。各パッケージ (`phoenix-laser-<バージョン>-<システム>.zip` または `.tar.gz`) には、プログラム、ライセンス、この README、変更履歴、アイコン、サンプルファイルが入っており、`.sha256` ファイルが付きます。リリースには全ファイルを一覧にした `SHA256SUMS` と `build-manifest.json` も含まれます。まだリリースは公開されていません。
+
+**署名と検証:** リリースのパッケージは EH3D のリリース鍵で署名され、各パッケージの `.sig` ファイルがその隣に公開されます (OpenSSH 署名、名前空間 `eh3d-release`)。実行する前にダウンロードを確認してください。SHA-256 を比較し (`sha256sum -c phoenix-laser-<バージョン>-<システム>.tar.gz.sha256`、Windows では `Get-FileHash`)、署名を `ssh-keygen -Y verify -f allowed_signers -I eh3d-release -n eh3d-release -s <パッケージ>.sig < <パッケージ>` で検証します。`allowed_signers` には `eh3d-release <鍵の種類> <EH3D リリースの公開鍵>` の行を入れます。
+
 ## 📂 リポジトリの構成
 
 <p align="center">
