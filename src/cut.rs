@@ -758,7 +758,8 @@ pub fn verify_gcode(gcode: &str, s_max: u32, bed: Option<Pt>) -> Result<(), Stri
                 return Err(format!("line {at}: the focus moves with the laser on"));
             }
             if let Some((bx, by)) = bed {
-                let out = |v: Option<f64>, hi: f64| v.is_some_and(|v| !(-1e-6..=hi + 1e-6).contains(&v));
+                let out =
+                    |v: Option<f64>, hi: f64| v.is_some_and(|v| !(-1e-6..=hi + 1e-6).contains(&v));
                 if out(x, bx) || out(y, by) {
                     return Err(format!("line {at}: a move outside of the bed"));
                 }
