@@ -5,7 +5,13 @@
 
 /// The reader of PGM and PNG pictures, kept in EH3D-COMMON because the other programs that work from a picture read them the same way.
 pub use eh3d_image as image;
+pub mod browse;
 pub mod calibrate;
 pub mod dither;
 pub mod gcode_out;
+#[cfg(feature = "gui")]
+pub mod gui;
+pub mod lang;
 pub mod raster;
+pub mod viewport;
+pub mod window;
