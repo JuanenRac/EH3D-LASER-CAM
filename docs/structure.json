@@ -3,6 +3,7 @@
   "ecosystem": "eh3d",
   "svg": "en",
   "exempt": [
+    "build.rs",
     "build.bat",
     "build.sh",
     "run.bat",
@@ -116,6 +117,71 @@
             "zh": "逻辑的一部分",
             "pt": "uma parte da lógica"
           }
+        },
+        {
+          "name": "browse.rs",
+          "desc": {
+            "en": "the list of files of the window that opens a file",
+            "es": "la lista de ficheros de la ventana que abre un fichero",
+            "de": "die Dateiliste des Fensters zum Öffnen einer Datei",
+            "fr": "la liste des fichiers de la fenêtre d'ouverture d'un fichier",
+            "it": "l'elenco dei file della finestra che apre un file",
+            "ja": "ファイルを開くウィンドウのファイル一覧",
+            "zh": "打开文件窗口的文件列表",
+            "pt": "a lista de ficheiros da janela que abre um ficheiro"
+          }
+        },
+        {
+          "name": "gui.rs",
+          "desc": {
+            "en": "the window (egui, with the gui feature): draws the state and passes on what the person does",
+            "es": "la ventana (egui, con la característica gui): dibuja el estado y transmite lo que hace la persona",
+            "de": "das Fenster (egui, mit dem Feature gui): zeichnet den Zustand und gibt weiter, was die Person tut",
+            "fr": "la fenêtre (egui, avec la fonctionnalité gui) : dessine l'état et transmet ce que fait la personne",
+            "it": "la finestra (egui, con la funzione gui): disegna lo stato e inoltra ciò che fa la persona",
+            "ja": "ウィンドウ（egui、gui 機能）：状態を描き、操作を伝える",
+            "zh": "窗口（egui，gui 特性）：绘制状态并传递用户的操作",
+            "pt": "a janela (egui, com a funcionalidade gui): desenha o estado e transmite o que a pessoa faz"
+          }
+        },
+        {
+          "name": "lang.rs",
+          "desc": {
+            "en": "the words of the window in the eight languages",
+            "es": "las palabras de la ventana en los ocho idiomas",
+            "de": "die Wörter des Fensters in den acht Sprachen",
+            "fr": "les mots de la fenêtre dans les huit langues",
+            "it": "le parole della finestra nelle otto lingue",
+            "ja": "ウィンドウの文言（8言語）",
+            "zh": "窗口的文字（八种语言）",
+            "pt": "as palavras da janela nos oito idiomas"
+          }
+        },
+        {
+          "name": "viewport.rs",
+          "desc": {
+            "en": "zoom and pan of the picture, in plain numbers",
+            "es": "zoom y desplazamiento de la imagen, en números simples",
+            "de": "Zoom und Verschiebung des Bildes, in einfachen Zahlen",
+            "fr": "zoom et déplacement de l'image, en simples nombres",
+            "it": "zoom e spostamento dell'immagine, in semplici numeri",
+            "ja": "画像の拡大縮小と移動（単純な数値）",
+            "zh": "图像的缩放和平移（纯数值）",
+            "pt": "zoom e deslocamento da imagem, em números simples"
+          }
+        },
+        {
+          "name": "window.rs",
+          "desc": {
+            "en": "the state of the window without a screen: picture, settings, passes and export",
+            "es": "el estado de la ventana sin pantalla: imagen, ajustes, pasadas y exportación",
+            "de": "der Zustand des Fensters ohne Bildschirm: Bild, Einstellungen, Durchgänge, Export",
+            "fr": "l'état de la fenêtre sans écran : image, réglages, passes et export",
+            "it": "lo stato della finestra senza schermo: immagine, impostazioni, passaggi ed esportazione",
+            "ja": "画面なしのウィンドウの状態：画像、設定、走査、書き出し",
+            "zh": "不需要屏幕的窗口状态：图像、设置、扫描路径和导出",
+            "pt": "o estado da janela sem ecrã: imagem, definições, passagens e exportação"
+          }
         }
       ]
     },
@@ -174,6 +240,19 @@
             "ja": "コマンドラインのテスト：知らないオプションと語",
             "zh": "命令行测试：它不认识的选项和词",
             "pt": "testes da linha de comandos: opções e palavras que não conhece"
+          }
+        },
+        {
+          "name": "window_cli.rs",
+          "desc": {
+            "en": "tests that a build without the gui feature stays a command line",
+            "es": "pruebas de que una compilación sin la característica gui sigue siendo solo línea de comandos",
+            "de": "Tests, dass ein Build ohne das Feature gui eine reine Kommandozeile bleibt",
+            "fr": "tests qu'une compilation sans la fonctionnalité gui reste une ligne de commande",
+            "it": "test che una compilazione senza la funzione gui resti una riga di comando",
+            "ja": "gui 機能なしのビルドがコマンドラインのままであることのテスト",
+            "zh": "测试没有 gui 特性的构建仍然只是命令行",
+            "pt": "testes de que uma compilação sem a funcionalidade gui continua a ser só linha de comandos"
           }
         }
       ]

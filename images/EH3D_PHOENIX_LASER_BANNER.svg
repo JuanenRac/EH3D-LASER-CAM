@@ -208,7 +208,7 @@
 
     <text x="0" y="182" font-family="'Inter', 'Segoe UI', 'Roboto', sans-serif" font-weight="700" font-size="22" fill="url(#goldGlow)" letter-spacing="4" filter="url(#glowGold)">IMAGE TO LASER G-CODE</text>
 
-    <text x="0" y="212" font-family="'Inter', 'Segoe UI', 'Roboto', sans-serif" font-weight="500" font-size="12" fill="#8B949E" letter-spacing="1.5">RUST · G-CODE · PNG · DITHERING</text>
+    <text x="0" y="212" font-family="'Inter', 'Segoe UI', 'Roboto', sans-serif" font-weight="500" font-size="12" fill="#8B949E" letter-spacing="1.5">RUST · G-CODE · PNG · DITHERING · EGUI</text>
 
     <g transform="translate(0, 232)">
       <rect x="0" y="0" width="60" height="22" rx="11" fill="#161B22" stroke="#30363D" stroke-width="1"/>

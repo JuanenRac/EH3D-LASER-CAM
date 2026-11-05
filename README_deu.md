@@ -17,7 +17,7 @@
 
 ---
 
-**Ehrlichkeitscheck - was heute wirklich läuft:** eine Rust-Bibliothek und ein Kommandozeilenprogramm (`phoenix-laser`) mit 74 Tests, die auf einem Computer laufen: wandelt ein Bild durch Dithering in Punkte um und schreibt den G-Code eines Lasers, der zeilenweise mit dynamischer Leistung und Überlauf brennt, sowie ein Testraster Leistung gegen Vorschub. Es hat noch kein Fenster, wurde an keiner Maschine ausprobiert und nicht an einer Sammlung echter Dateien geprüft.
+**Ehrlichkeitscheck - was heute wirklich läuft:** eine Rust-Bibliothek und ein Kommandozeilenprogramm (`phoenix-laser`) mit 125 Tests, die auf einem Computer laufen: wandelt ein Bild durch Dithering in Punkte um und schreibt den G-Code eines Lasers, der zeilenweise mit dynamischer Leistung und Überlauf brennt, sowie ein Testraster Leistung gegen Vorschub. Es hat ein Fenster (Build mit `--features gui`), das ein PNG- oder PGM-Bild öffnet, die Durchgänge des Lasers nach Leistung gefärbt zeigt, Leistung, Vorschub und Punkte einstellen lässt und den G-Code exportiert, aber das Fenster wurde noch nicht auf einem Bildschirm angesehen; wurde an keiner Maschine ausprobiert und nicht an einer Sammlung echter Dateien geprüft.
 
 ---
 
@@ -30,7 +30,7 @@
 |---|---|
 | Version | `0.0.3` |
 | Reifegrad | Gerüst |
-| Tests | 74 |
+| Tests | 125 |
 | Technologie-Stack | Rust |
 | Auf echter Hardware | Nicht erprobt: nichts davon lief an einer Maschine |
 
@@ -46,9 +46,9 @@ Jede Zeile ist ein Teil dieses Repositorys, und die Ampel sagt, wie weit er heut
 |---|---|---|
 | Kern | 🟡 | wandelt ein Bild durch Dithering in Punkte um und schreibt den G-Code eines Lasers, der zeilenweise mit dynamischer Leistung und Überlauf brennt, sowie ein Testraster Leistung gegen Vorschub; am Computer mit normalen und beschädigten Eingaben getestet, nicht mit einer Sammlung echter Dateien. |
 | Kommandozeile | 🟡 | `phoenix-laser` führt dieselben Funktionen wie die Bibliothek aus und gibt das Ergebnis aus; jeder Fehler kommt als Meldung mit einem Exit-Code ungleich null zurück. |
-| Tests | 🟡 | 74 Tests bestehen (`cargo test`), mit Normalfällen, Grenzfällen und beschädigten Eingaben. |
+| Tests | 🟡 | 125 Tests bestehen (`cargo test`), mit Normalfällen, Grenzfällen und beschädigten Eingaben. |
 | Sicherheit | 🟡 | Reines sicheres Rust (`forbid(unsafe_code)`): nichts gerät bei den übergebenen Dateien in Panik und ein schlechter Wert ist ein Fehler mit Begründung; keine unabhängige Prüfung. |
-| Fenster | 🔴 | Geplant: das egui-Fenster, das die Suite gemeinsam nutzt; heute gibt es nur die Kommandozeile. |
+| Fenster | 🟠 | Geschrieben (egui, `--features gui`): Bild öffnen oder hineinziehen, die Durchgänge des Lasers nach Leistung gefärbt sehen, Punkte, Leistung und Vorschub einstellen, ein Kalibrierraster, Zoom und Verschieben, exportieren; die Logik ist getestet, aber noch nicht gebaut oder auf einem Bildschirm angesehen. |
 | Echte Hardware | 🔴 | Nicht erprobt: nichts davon wurde an einer Maschine ausgeführt. |
 | Dokumentation | 🟡 | README in acht Sprachen, das Changelog und die zwei aus `docs/` gezeichneten Bilder. |
 
@@ -62,7 +62,7 @@ Jede Zeile ist ein Teil dieses Repositorys, und die Ampel sagt, wie weit er heut
 
 ## 🧩 Rolle in EH3D
 
-EH3D-PHOENIX-LASER ist ein Programm der EH3D Fabrication Suite. Heute arbeitet es als Bibliothek und Kommandozeile; sein Fenster im gemeinsamen Aussehen der Suite ist geplant. Es liest und schreibt einfache Dateien und lässt sich allein oder zwischen den anderen Programmen nutzen.
+EH3D-PHOENIX-LASER ist ein Programm der EH3D Fabrication Suite. Es arbeitet als Bibliothek und Kommandozeile und, mit `--features gui` gebaut, als Fenster im gemeinsamen Aussehen der Suite. Es liest und schreibt einfache Dateien und lässt sich allein oder zwischen den anderen Programmen nutzen.
 
 ## 🏛️ Architektur
 
@@ -96,33 +96,11 @@ Wie die Teile dieses Repositorys zusammenpassen: wer es nutzt, was es enthält u
 Die Bibliothek ist `eh3d_phoenix_laser` (`use eh3d_phoenix_laser::...`); die Kommandozeile ist `phoenix-laser`. Die Befehle sind diese; jeder gibt sein Ergebnis auf der Standardausgabe aus und meldet einen Fehler auf der Fehlerausgabe mit einem Exit-Code ungleich null. Es gibt keinen Netzwerkzugriff.
 
 ```text
-EH3D-PHOENIX-LASER/
-├── src/
-│   ├── lib.rs                                   die Bibliothek: was jeder Befehl nutzt
-│   ├── main.rs                                  die Kommandozeile
-│   ├── calibrate.rs                             ein Teil der Logik
-│   ├── cli_args.rs                              die Argumente der Kommandozeile, dieselbe Datei in jedem kleinen Werkzeug
-│   ├── dither.rs                                ein Teil der Logik
-│   ├── gcode_out.rs                             die einzige Schreibweise einer G-Code-Zahl und der Standardkopf
-│   └── raster.rs                                ein Teil der Logik
-├── tests/
-│   ├── dry_run.rs                               Tests von --dry-run: zählt dasselbe und schreibt nichts
-│   ├── laser.rs                                 Tests von Bibliothek und Kommandozeile
-│   ├── readme.rs                                Tests, die ausführen, was README und run-Skripte versprechen
-│   └── strict.rs                                Tests der Kommandozeile: Optionen und Wörter, die sie nicht kennt
-├── examples/
-│   └── gradient.pgm                             ein Beispiel zum Ausprobieren
-├── docs/
-│   ├── architecture.json                        Daten des Architektur-Bildes
-│   └── structure.json                           Daten des Struktur-Bildes
-├── tools/                                       CI-Prüfung, README-Prüfung und die Bildwerkzeuge
-├── images/                                      Banner und die Bilder von Architektur und Repository-Struktur
-├── .github/                                     CI- und Release-Workflows, Vorlagen für Issues und Pull Requests
-├── eh3d.project.json                            Manifest: Version, Rolle, Reifegrad und Build-Befehl
-├── Cargo.toml Cargo.lock                        der Workspace und seine festgelegten Abhängigkeiten
-├── CHANGELOG.md                                 was sich in jeder Version geändert hat
-├── SECURITY.md SUPPORT.md                       Schwachstellen melden und Fragen stellen
-└── CONTRIBUTING.md CODE_OF_CONDUCT.md LICENSE   Mitwirken, Verhaltenskodex und Lizenz
+phoenix-laser engrave IMAGE OUT.nc --width-mm 50 [--dot-mm 0.1] [--feed 3000] [--power 50] [--smax 1000]
+              [--dither fs|atkinson|threshold] [--threshold 128] [--overscan MM|auto] [--accel 1000] [--origin X,Y] [--dry-run]
+phoenix-laser calibrate OUT.nc --powers 20,40,60,80 --feeds 1000,2000,3000 [--smax 1000]
+phoenix-laser info IMAGE
+phoenix-laser [gui] [IMAGE]                      the window (a build with --features gui); with no arguments it opens
 ```
 
 ## ⚙️ Konfiguration
@@ -131,17 +109,18 @@ Es gibt noch keine Konfigurationsdatei: Was die Person wählt, wird als Argument
 
 ## 🚀 Schnellstart
 
-Sie brauchen eine stabile Rust-Toolchain (1.75 oder neuer). Das Repository EH3D-COMMON muss neben diesem geklont sein: der Bildleser wird daraus per Pfad übernommen.
+Sie brauchen eine stabile Rust-Toolchain (1.88 oder neuer). Das Repository EH3D-COMMON muss neben diesem geklont sein: der Bildleser wird daraus per Pfad übernommen.
 
 ```bash
 cargo build --release
 cargo test
 cargo run --release -- engrave examples/gradient.pgm examples/gradient.nc --width-mm 16 --dot-mm 0.5 --overscan auto
+cargo run --release --features gui   # the window
 ```
 
 ## 🧪 Tests
 
-Die Suite hat 74 Tests (`cargo test`, in der CI unter Windows und Linux). Sie prüfen Normalfälle, Grenzfälle und beschädigte Eingaben: leere Dateien, Datenmüll und abgeschnittene Dateien lösen nie eine Panik aus. Die CI führt außerdem `cargo fmt --check`, `cargo clippy` mit Warnungen als Fehlern und `python -I tools/ci_validate.py` aus.
+Die Suite hat 125 Tests (`cargo test`, in der CI unter Windows und Linux). Sie prüfen Normalfälle, Grenzfälle und beschädigte Eingaben: leere Dateien, Datenmüll und abgeschnittene Dateien lösen nie eine Panik aus. Die CI führt außerdem `cargo fmt --check`, `cargo clippy` mit Warnungen als Fehlern und `python -I tools/ci_validate.py` aus.
 
 ## 🏗️ Build und Veröffentlichung
 
@@ -165,12 +144,18 @@ EH3D-PHOENIX-LASER/
 │   ├── cli_args.rs                              die Argumente der Kommandozeile, dieselbe Datei in jedem kleinen Werkzeug
 │   ├── dither.rs                                ein Teil der Logik
 │   ├── gcode_out.rs                             die einzige Schreibweise einer G-Code-Zahl und der Standardkopf
-│   └── raster.rs                                ein Teil der Logik
+│   ├── raster.rs                                ein Teil der Logik
+│   ├── browse.rs                                die Dateiliste des Fensters zum Öffnen einer Datei
+│   ├── gui.rs                                   das Fenster (egui, mit dem Feature gui): zeichnet den Zustand und gibt weiter, was die Person tut
+│   ├── lang.rs                                  die Wörter des Fensters in den acht Sprachen
+│   ├── viewport.rs                              Zoom und Verschiebung des Bildes, in einfachen Zahlen
+│   └── window.rs                                der Zustand des Fensters ohne Bildschirm: Bild, Einstellungen, Durchgänge, Export
 ├── tests/
 │   ├── dry_run.rs                               Tests von --dry-run: zählt dasselbe und schreibt nichts
 │   ├── laser.rs                                 Tests von Bibliothek und Kommandozeile
 │   ├── readme.rs                                Tests, die ausführen, was README und run-Skripte versprechen
-│   └── strict.rs                                Tests der Kommandozeile: Optionen und Wörter, die sie nicht kennt
+│   ├── strict.rs                                Tests der Kommandozeile: Optionen und Wörter, die sie nicht kennt
+│   └── window_cli.rs                            Tests, dass ein Build ohne das Feature gui eine reine Kommandozeile bleibt
 ├── examples/
 │   └── gradient.pgm                             ein Beispiel zum Ausprobieren
 ├── docs/
@@ -192,14 +177,14 @@ EH3D-PHOENIX-LASER/
 
 **Bekannte Grenzen heute**
 
-* Es hat noch kein Fenster: nur Bibliothek und Kommandozeile existieren.
+* Das Fenster wurde noch nicht auf einem Bildschirm angesehen und nimmt nur Bilder an: Vektorkonturen werden nicht geschnitten.
 * Es wurde weder an einer Maschine noch mit einer Sammlung echter Dateien erprobt und hatte keine unabhängige Prüfung.
 * Es brennt Punkte, keine Vektoren (noch kein Konturschneiden), der Laser ist der eines GRBL-Controllers mit `M4`, und nichts wurde an einem echten Laser oder Material erprobt.
 
 **Als Nächstes**
 
-* Vektorkonturen mit der Geschwindigkeit folgender Leistung schneiden, die Leistungsdichte vor dem Brennen auf der Platine zeigen und das Fenster der Suite ergänzen.
-* Das Fenster im gemeinsamen Aussehen der Suite in den acht Sprachen ergänzen.
+* Vektorkonturen mit der Geschwindigkeit folgender Leistung schneiden und die Leistungsdichte vor dem Brennen auf der Platine zeigen.
+* Das Fenster auf einem Bildschirm ansehen und fertigstellen.
 * Mit echten Dateien und den anderen Programmen der Suite ausprobieren.
 
 ## 🌍 Sprachen

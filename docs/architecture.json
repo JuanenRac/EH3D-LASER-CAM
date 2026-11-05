@@ -2,7 +2,7 @@
   "repo": "EH3D-PHOENIX-LASER",
   "ecosystem": "eh3d",
   "tagline": "An image, dots, and the G-code of a laser.",
-  "description": "EH3D-PHOENIX-LASER is a Rust library and command line that turn an image into dots by dithering and write the G-code of a laser that burns line by line with dynamic power. It has no window yet.",
+  "description": "EH3D-PHOENIX-LASER is a Rust library and command line that turn an image into dots by dithering and write the G-code of a laser that burns line by line with dynamic power. Built with the gui feature it also has a window (egui) that opens a picture, shows the passes of the laser coloured by power, sets the power and the feed and exports the G-code.",
   "columns": [
     "WHO USES IT",
     "THIS REPOSITORY",
@@ -70,6 +70,23 @@
       ]
     },
     {
+      "id": "window",
+      "column": 1,
+      "level": "untested",
+      "title": "window (gui feature)",
+      "lines": [
+        "state, zoom and words are tested;",
+        "the drawing is not seen yet"
+      ],
+      "code": [
+        "src/window.rs::pub struct Window",
+        "src/viewport.rs::pub struct Viewport",
+        "src/lang.rs::pub enum Lang",
+        "src/browse.rs::pub struct Browser",
+        "src/gui.rs::pub fn run"
+      ]
+    },
+    {
       "id": "common",
       "column": 2,
       "level": "external",
@@ -120,12 +137,19 @@
       "from": "raster",
       "to": "laser",
       "level": "tested"
+    },
+    {
+      "from": "person",
+      "to": "window",
+      "label": "window",
+      "level": "untested"
     }
   ],
   "legend": {
-    "tested": "covered by tests on a computer (53 tests)",
+    "tested": "covered by tests on a computer (125 tests)",
     "config": "planned, not used today",
-    "external": "a person, a file or another repository"
+    "external": "a person, a file or another repository",
+    "untested": "written, not built or looked at on a screen yet"
   },
   "footer": "No laser has burned anything with this yet."
 }

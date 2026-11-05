@@ -17,7 +17,7 @@
 
 ---
 
-**Comprobación de honestidad - lo que funciona hoy:** una biblioteca Rust y un programa de línea de comandos (`phoenix-laser`) con 74 pruebas que se ejecutan en un ordenador: convierte una imagen en puntos por tramado y escribe el G-code de un láser que quema línea a línea con potencia dinámica y sobrerrecorrido, y una rejilla de prueba de potencia contra avance. Todavía no tiene ventana, no se ha probado en una máquina y no se ha comprobado con una colección de ficheros reales.
+**Comprobación de honestidad - lo que funciona hoy:** una biblioteca Rust y un programa de línea de comandos (`phoenix-laser`) con 125 pruebas que se ejecutan en un ordenador: convierte una imagen en puntos por tramado y escribe el G-code de un láser que quema línea a línea con potencia dinámica y sobrerrecorrido, y una rejilla de prueba de potencia contra avance. Tiene una ventana (se compila con `--features gui`) que abre una imagen PNG o PGM, muestra las pasadas del láser coloreadas por potencia, permite ajustar la potencia, el avance y los puntos, y exporta el G-code, pero todavía no se ha visto en una pantalla; no se ha probado en una máquina y no se ha comprobado con una colección de ficheros reales.
 
 ---
 
@@ -30,7 +30,7 @@
 |---|---|
 | Versión | `0.0.3` |
 | Madurez | Andamiaje |
-| Pruebas | 74 |
+| Pruebas | 125 |
 | Pila tecnológica | Rust |
 | En hardware real | No probado: nada de esto se ha ejecutado en una máquina |
 
@@ -46,9 +46,9 @@ Cada línea es una parte de este repositorio y la luz dice hasta dónde llega ho
 |---|---|---|
 | Núcleo | 🟡 | convierte una imagen en puntos por tramado y escribe el G-code de un láser que quema línea a línea con potencia dinámica y sobrerrecorrido, y una rejilla de prueba de potencia contra avance; probado en un ordenador con entradas normales y dañadas, no con una colección de ficheros reales. |
 | Línea de comandos | 🟡 | `phoenix-laser` ejecuta las mismas funciones que la biblioteca e imprime el resultado; cada error vuelve como mensaje y un código de salida distinto de cero. |
-| Pruebas | 🟡 | 74 pruebas pasan (`cargo test`), con casos normales, casos límite y entradas dañadas. |
+| Pruebas | 🟡 | 125 pruebas pasan (`cargo test`), con casos normales, casos límite y entradas dañadas. |
 | Seguridad | 🟡 | Rust seguro y simple (`forbid(unsafe_code)`): nada entra en pánico con los ficheros recibidos y un valor malo es un error con su motivo; sin revisión independiente. |
-| Ventana | 🔴 | Previsto: la ventana egui común a la suite; hoy solo existe la línea de comandos. |
+| Ventana | 🟠 | Escrita (egui, `--features gui`): abrir o soltar una imagen, ver las pasadas del láser coloreadas por potencia, ajustar los puntos, la potencia y el avance, una rejilla de calibración, zoom y desplazamiento, exportar; su lógica está probada, pero todavía no se ha compilado ni visto en una pantalla. |
 | Hardware real | 🔴 | No probado: nada de esto se ha ejecutado en una máquina. |
 | Documentación | 🟡 | README en ocho idiomas, el registro de cambios y las dos imágenes dibujadas desde `docs/`. |
 
@@ -62,7 +62,7 @@ Cada línea es una parte de este repositorio y la luz dice hasta dónde llega ho
 
 ## 🧩 Papel en EH3D
 
-EH3D-PHOENIX-LASER es un programa de la EH3D Fabrication Suite. Hoy funciona como biblioteca y línea de comandos; su ventana, con el aspecto que comparten los demás programas de la suite, está prevista. Lee y escribe ficheros simples, así que puede usarse solo o entre los demás programas.
+EH3D-PHOENIX-LASER es un programa de la EH3D Fabrication Suite. Funciona como biblioteca y línea de comandos y, compilado con `--features gui`, como ventana con el aspecto que comparten los demás programas de la suite. Lee y escribe ficheros simples, así que puede usarse solo o entre los demás programas.
 
 ## 🏛️ Arquitectura
 
@@ -96,33 +96,11 @@ Cómo encajan las partes de este repositorio: quién lo usa, qué contiene y de 
 La biblioteca es `eh3d_phoenix_laser` (`use eh3d_phoenix_laser::...`); la línea de comandos es `phoenix-laser`. Las órdenes son estas; cada una imprime su resultado por la salida estándar e informa de un error por la salida de errores con un código de salida distinto de cero. No hay acceso a la red.
 
 ```text
-EH3D-PHOENIX-LASER/
-├── src/
-│   ├── lib.rs                                   la biblioteca: lo que usa cada orden
-│   ├── main.rs                                  la línea de comandos
-│   ├── calibrate.rs                             una parte de la lógica
-│   ├── cli_args.rs                              los argumentos de la línea de comandos, el mismo fichero en cada utilidad pequeña
-│   ├── dither.rs                                una parte de la lógica
-│   ├── gcode_out.rs                             la única forma de escribir un número de G-code y la cabecera estándar
-│   └── raster.rs                                una parte de la lógica
-├── tests/
-│   ├── dry_run.rs                               pruebas de --dry-run: cuenta lo mismo y no escribe nada
-│   ├── laser.rs                                 pruebas de la biblioteca y la línea de comandos
-│   ├── readme.rs                                pruebas que ejecutan lo que prometen el README y los scripts run
-│   └── strict.rs                                pruebas de la línea de comandos: opciones y palabras que no conoce
-├── examples/
-│   └── gradient.pgm                             una muestra para probar el programa
-├── docs/
-│   ├── architecture.json                        datos de la imagen de Arquitectura
-│   └── structure.json                           datos de la imagen de Estructura
-├── tools/                                       comprobación del CI y del README y herramientas de imágenes
-├── images/                                      banner y las imágenes de Arquitectura y Estructura del repositorio
-├── .github/                                     flujos de CI y de publicación, plantillas de issues y pull requests
-├── eh3d.project.json                            manifiesto: versión, rol, madurez y comando de compilación
-├── Cargo.toml Cargo.lock                        el workspace y sus dependencias fijadas
-├── CHANGELOG.md                                 qué cambió en cada versión
-├── SECURITY.md SUPPORT.md                       cómo informar de una vulnerabilidad y dónde preguntar
-└── CONTRIBUTING.md CODE_OF_CONDUCT.md LICENSE   cómo contribuir, el código de conducta y la licencia
+phoenix-laser engrave IMAGE OUT.nc --width-mm 50 [--dot-mm 0.1] [--feed 3000] [--power 50] [--smax 1000]
+              [--dither fs|atkinson|threshold] [--threshold 128] [--overscan MM|auto] [--accel 1000] [--origin X,Y] [--dry-run]
+phoenix-laser calibrate OUT.nc --powers 20,40,60,80 --feeds 1000,2000,3000 [--smax 1000]
+phoenix-laser info IMAGE
+phoenix-laser [gui] [IMAGE]                      the window (a build with --features gui); with no arguments it opens
 ```
 
 ## ⚙️ Configuración
@@ -131,17 +109,18 @@ Todavía no hay fichero de configuración: lo que elige la persona se da como ar
 
 ## 🚀 Inicio rápido
 
-Necesita una cadena de herramientas Rust estable (1.75 o más reciente). El repositorio EH3D-COMMON debe estar clonado junto a este: el lector de imágenes se toma de él por ruta.
+Necesita una cadena de herramientas Rust estable (1.88 o más reciente). El repositorio EH3D-COMMON debe estar clonado junto a este: el lector de imágenes se toma de él por ruta.
 
 ```bash
 cargo build --release
 cargo test
 cargo run --release -- engrave examples/gradient.pgm examples/gradient.nc --width-mm 16 --dot-mm 0.5 --overscan auto
+cargo run --release --features gui   # the window
 ```
 
 ## 🧪 Pruebas
 
-El conjunto tiene 74 pruebas (`cargo test`, ejecutadas en Windows y Linux en el CI). Comprueban los casos normales, los casos límite y las entradas dañadas: ficheros vacíos, basura y ficheros cortados nunca provocan un pánico. El CI ejecuta además `cargo fmt --check`, `cargo clippy` con las advertencias como errores y `python -I tools/ci_validate.py`.
+El conjunto tiene 125 pruebas (`cargo test`, ejecutadas en Windows y Linux en el CI). Comprueban los casos normales, los casos límite y las entradas dañadas: ficheros vacíos, basura y ficheros cortados nunca provocan un pánico. El CI ejecuta además `cargo fmt --check`, `cargo clippy` con las advertencias como errores y `python -I tools/ci_validate.py`.
 
 ## 🏗️ Compilación y publicación
 
@@ -165,12 +144,18 @@ EH3D-PHOENIX-LASER/
 │   ├── cli_args.rs                              los argumentos de la línea de comandos, el mismo fichero en cada utilidad pequeña
 │   ├── dither.rs                                una parte de la lógica
 │   ├── gcode_out.rs                             la única forma de escribir un número de G-code y la cabecera estándar
-│   └── raster.rs                                una parte de la lógica
+│   ├── raster.rs                                una parte de la lógica
+│   ├── browse.rs                                la lista de ficheros de la ventana que abre un fichero
+│   ├── gui.rs                                   la ventana (egui, con la característica gui): dibuja el estado y transmite lo que hace la persona
+│   ├── lang.rs                                  las palabras de la ventana en los ocho idiomas
+│   ├── viewport.rs                              zoom y desplazamiento de la imagen, en números simples
+│   └── window.rs                                el estado de la ventana sin pantalla: imagen, ajustes, pasadas y exportación
 ├── tests/
 │   ├── dry_run.rs                               pruebas de --dry-run: cuenta lo mismo y no escribe nada
 │   ├── laser.rs                                 pruebas de la biblioteca y la línea de comandos
 │   ├── readme.rs                                pruebas que ejecutan lo que prometen el README y los scripts run
-│   └── strict.rs                                pruebas de la línea de comandos: opciones y palabras que no conoce
+│   ├── strict.rs                                pruebas de la línea de comandos: opciones y palabras que no conoce
+│   └── window_cli.rs                            pruebas de que una compilación sin la característica gui sigue siendo solo línea de comandos
 ├── examples/
 │   └── gradient.pgm                             una muestra para probar el programa
 ├── docs/
@@ -192,14 +177,14 @@ EH3D-PHOENIX-LASER/
 
 **Límites conocidos hoy**
 
-* Todavía no tiene ventana: solo existen la biblioteca y la línea de comandos.
+* La ventana todavía no se ha visto en una pantalla y solo admite imágenes: los contornos vectoriales no se cortan.
 * No se ha probado en una máquina ni con una colección de ficheros reales y no ha tenido revisión independiente.
 * Quema puntos, no vectores (todavía no corta contornos), el láser es el de un controlador GRBL con `M4` y nada se ha probado en un láser ni un material reales.
 
 **Siguiente**
 
-* Cortar contornos vectoriales con potencia que sigue la velocidad, mostrar la densidad de potencia sobre la placa antes de quemar y añadir la ventana de la suite.
-* Añadir la ventana con el aspecto compartido por los programas de la suite, en los ocho idiomas.
+* Cortar contornos vectoriales con potencia que sigue la velocidad y mostrar la densidad de potencia sobre la placa antes de quemar.
+* Ver la ventana en una pantalla y terminarla.
 * Probarlo con ficheros reales y con los demás programas de la suite.
 
 ## 🌍 Idiomas

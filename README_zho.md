@@ -17,7 +17,7 @@
 
 ---
 
-**诚实检查 - 当前真正能运行的内容：** 一个 Rust 库和一个命令行程序（`phoenix-laser`），有 74 个在电脑上运行的测试：通过抖动把图像变成点阵，写出逐行烧蚀、带动态功率和过扫的激光 G 代码，以及功率与进给测试网格。目前还没有窗口，没有在机器上试过，也没有用大量真实文件验证过。
+**诚实检查 - 当前真正能运行的内容：** 一个 Rust 库和一个命令行程序（`phoenix-laser`），有 125 个在电脑上运行的测试：通过抖动把图像变成点阵，写出逐行烧蚀、带动态功率和过扫的激光 G 代码，以及功率与进给测试网格。有一个窗口（用 `--features gui` 构建），可以打开 PNG 或 PGM 图像，按功率着色显示激光的扫描路径，可设置功率、进给速度和点，并导出 G 代码，但窗口尚未在屏幕上看过，没有在机器上试过，也没有用大量真实文件验证过。
 
 ---
 
@@ -30,7 +30,7 @@
 |---|---|
 | 版本 | `0.0.3` |
 | 成熟度 | 脚手架 |
-| 测试 | 74 |
+| 测试 | 125 |
 | 技术栈 | Rust |
 | 真实硬件 | 未试过：这里的任何内容都没有在机器上运行过 |
 
@@ -46,9 +46,9 @@
 |---|---|---|
 | 核心 | 🟡 | 通过抖动把图像变成点阵，写出逐行烧蚀、带动态功率和过扫的激光 G 代码，以及功率与进给测试网格；已在电脑上用正常和损坏的输入测试，未用大量真实文件验证。 |
 | 命令行 | 🟡 | `phoenix-laser` 运行与库相同的函数并打印结果；每个错误都以消息和非零退出码返回。 |
-| 测试 | 🟡 | 74 个测试通过（`cargo test`），包含正常情况、边界情况和损坏的输入。 |
+| 测试 | 🟡 | 125 个测试通过（`cargo test`），包含正常情况、边界情况和损坏的输入。 |
 | 安全 | 🟡 | 纯安全 Rust（`forbid(unsafe_code)`）：处理收到的文件时不会 panic，错误的值会返回带原因的错误；没有独立审查。 |
-| 窗口 | 🔴 | 计划中：套件通用的 egui 窗口；目前只有命令行。 |
+| 窗口 | 🟠 | 已编写（egui，`--features gui`）：打开或拖入图像、查看按功率着色的激光扫描路径、设置点、功率和进给速度、校准网格、缩放和平移、导出；其逻辑已测试，但尚未构建，也尚未在屏幕上看过。 |
 | 真实硬件 | 🔴 | 未试过：这里的任何内容都没有在机器上运行过。 |
 | 文档 | 🟡 | 八种语言的 README、更新日志，以及由 `docs/` 绘制的两张图。 |
 
@@ -62,7 +62,7 @@
 
 ## 🧩 在 EH3D 中的角色
 
-EH3D-PHOENIX-LASER 是 EH3D Fabrication Suite 的一个程序。目前它以库和命令行的形式工作；与套件其他程序外观一致的窗口在计划中。它读写简单的文件，因此可以单独使用，也可以用在其他程序之间。
+EH3D-PHOENIX-LASER 是 EH3D Fabrication Suite 的一个程序。它以库和命令行的形式工作，用 `--features gui` 构建时还是一个与套件其他程序外观一致的窗口。它读写简单的文件，因此可以单独使用，也可以用在其他程序之间。
 
 ## 🏛️ 架构
 
@@ -96,33 +96,11 @@ EH3D-PHOENIX-LASER 是 EH3D Fabrication Suite 的一个程序。目前它以库�
 库为 `eh3d_phoenix_laser`（`use eh3d_phoenix_laser::...`），命令行为 `phoenix-laser`。命令如下；每个命令把结果打印到标准输出，把错误以非零退出码报告到标准错误。没有网络访问。
 
 ```text
-EH3D-PHOENIX-LASER/
-├── src/
-│   ├── lib.rs                                   库：每个命令所使用的部分
-│   ├── main.rs                                  命令行
-│   ├── calibrate.rs                             逻辑的一部分
-│   ├── cli_args.rs                              命令行参数：每个小工具中的同一个文件
-│   ├── dither.rs                                逻辑的一部分
-│   ├── gcode_out.rs                             G 代码数字的唯一写法和标准文件头
-│   └── raster.rs                                逻辑的一部分
-├── tests/
-│   ├── dry_run.rs                               --dry-run 测试：计数相同且不写入任何内容
-│   ├── laser.rs                                 库和命令行的测试
-│   ├── readme.rs                                运行 README 和 run 脚本所承诺内容的测试
-│   └── strict.rs                                命令行测试：它不认识的选项和词
-├── examples/
-│   └── gradient.pgm                             试用的示例
-├── docs/
-│   ├── architecture.json                        架构图数据
-│   └── structure.json                           结构图数据
-├── tools/                                       CI 和 README 检查及绘图工具
-├── images/                                      横幅图以及架构和仓库结构图片
-├── .github/                                     CI 与发布工作流、Issue 和 PR 模板
-├── eh3d.project.json                            清单：版本、角色、成熟度和构建命令
-├── Cargo.toml Cargo.lock                        工作区及其锁定的依赖
-├── CHANGELOG.md                                 每个版本的变更
-├── SECURITY.md SUPPORT.md                       如何报告漏洞及在哪里提问
-└── CONTRIBUTING.md CODE_OF_CONDUCT.md LICENSE   参与贡献、行为准则和许可证
+phoenix-laser engrave IMAGE OUT.nc --width-mm 50 [--dot-mm 0.1] [--feed 3000] [--power 50] [--smax 1000]
+              [--dither fs|atkinson|threshold] [--threshold 128] [--overscan MM|auto] [--accel 1000] [--origin X,Y] [--dry-run]
+phoenix-laser calibrate OUT.nc --powers 20,40,60,80 --feeds 1000,2000,3000 [--smax 1000]
+phoenix-laser info IMAGE
+phoenix-laser [gui] [IMAGE]                      the window (a build with --features gui); with no arguments it opens
 ```
 
 ## ⚙️ 配置
@@ -131,17 +109,18 @@ EH3D-PHOENIX-LASER/
 
 ## 🚀 快速开始
 
-需要稳定版 Rust 工具链（1.75 或更新）。需要把 EH3D-COMMON 仓库克隆到本仓库旁边：图像读取器通过路径从中引入。
+需要稳定版 Rust 工具链（1.88 或更新）。需要把 EH3D-COMMON 仓库克隆到本仓库旁边：图像读取器通过路径从中引入。
 
 ```bash
 cargo build --release
 cargo test
 cargo run --release -- engrave examples/gradient.pgm examples/gradient.nc --width-mm 16 --dot-mm 0.5 --overscan auto
+cargo run --release --features gui   # the window
 ```
 
 ## 🧪 测试
 
-测试套件有 74 个测试（`cargo test`，CI 在 Windows 和 Linux 上运行）。它们检查正常情况、边界情况和损坏的输入：空文件、乱码和被截断的文件绝不会 panic。CI 还运行 `cargo fmt --check`、把警告当作错误的 `cargo clippy` 以及 `python -I tools/ci_validate.py`。
+测试套件有 125 个测试（`cargo test`，CI 在 Windows 和 Linux 上运行）。它们检查正常情况、边界情况和损坏的输入：空文件、乱码和被截断的文件绝不会 panic。CI 还运行 `cargo fmt --check`、把警告当作错误的 `cargo clippy` 以及 `python -I tools/ci_validate.py`。
 
 ## 🏗️ 构建与发布
 
@@ -165,12 +144,18 @@ EH3D-PHOENIX-LASER/
 │   ├── cli_args.rs                              命令行参数：每个小工具中的同一个文件
 │   ├── dither.rs                                逻辑的一部分
 │   ├── gcode_out.rs                             G 代码数字的唯一写法和标准文件头
-│   └── raster.rs                                逻辑的一部分
+│   ├── raster.rs                                逻辑的一部分
+│   ├── browse.rs                                打开文件窗口的文件列表
+│   ├── gui.rs                                   窗口（egui，gui 特性）：绘制状态并传递用户的操作
+│   ├── lang.rs                                  窗口的文字（八种语言）
+│   ├── viewport.rs                              图像的缩放和平移（纯数值）
+│   └── window.rs                                不需要屏幕的窗口状态：图像、设置、扫描路径和导出
 ├── tests/
 │   ├── dry_run.rs                               --dry-run 测试：计数相同且不写入任何内容
 │   ├── laser.rs                                 库和命令行的测试
 │   ├── readme.rs                                运行 README 和 run 脚本所承诺内容的测试
-│   └── strict.rs                                命令行测试：它不认识的选项和词
+│   ├── strict.rs                                命令行测试：它不认识的选项和词
+│   └── window_cli.rs                            测试没有 gui 特性的构建仍然只是命令行
 ├── examples/
 │   └── gradient.pgm                             试用的示例
 ├── docs/
@@ -192,14 +177,14 @@ EH3D-PHOENIX-LASER/
 
 **目前已知的限制**
 
-* 还没有窗口：只有库和命令行。
+* 窗口尚未在屏幕上看过，只接受图像：不切割矢量轮廓。
 * 没有在机器上试过，也没有用大量真实文件验证过，也没有独立审查。
 * 它烧的是点而不是矢量（还没有轮廓切割），针对使用 `M4` 的 GRBL 控制器，没有在真实的激光器或材料上试过。
 
 **下一步**
 
-* 用随速度变化的功率切割矢量轮廓，在烧蚀前在板上显示功率密度，并添加套件窗口。
-* 添加与套件程序外观一致、支持八种语言的窗口。
+* 用随速度变化的功率切割矢量轮廓，并在烧蚀前在板上显示功率密度。
+* 在屏幕上查看窗口并完善它。
 * 用真实文件和套件的其他程序进行试用。
 
 ## 🌍 语言

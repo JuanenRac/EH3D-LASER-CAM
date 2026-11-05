@@ -3,6 +3,10 @@
 All notable changes to this project are documented here.
 
 ## [Unreleased]
+- **A window:** built with `--features gui`, `phoenix-laser` with no arguments (or with one picture, or `gui [IMAGE]`) opens a window in the look of the other programs of the suite (amber on charcoal, the icon of the program). A PNG or PGM picture is opened from the list of files of the window or dropped on it; the passes of the laser are drawn as the head makes them (burning in a colour that follows the power, travel and overscan thin), with zoom (wheel) and pan (drag); the width, the size of a dot, the dithering and its threshold, the feed, the power, the full power value, the overscan (typed or worked out from the acceleration) and the origin can be edited, a calibration grid of power against feed can be made, and the G-code is exported with the same header as the command line. The command line works as before, and a build without the feature is only a command line.
+- **The window speaks the eight languages:** English, Spanish, German, French, Italian, Japanese, Chinese and Portuguese of Portugal, chosen from the system and changeable in the window.
+- **The logic of the window needs no screen:** `window` (picture, settings, engraving, passes, export, status), `viewport` (zoom and pan), `browse` (the list of files) and `lang` (the words) are plain code with their own tests; `gui` only draws them.
+- **The Rust version needed is 1.88,** the one the window needs.
 
 - **Renamed:** The project is now called EH3D-PHOENIX-LASER (it was EH3D-LASER-CAM); it joins the PHOENIX family of programs.
 

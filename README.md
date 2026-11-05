@@ -17,7 +17,7 @@
 
 ---
 
-**Honesty check - what actually runs today:** a Rust library and a command line program (`phoenix-laser`) with 74 tests that run on a computer: turns an image into dots by dithering and writes the G-code of a laser that burns line by line with dynamic power and overscan, and a power-against-feed test grid. It has no window yet, it has not been tried on a machine and it has not been checked against a collection of real files.
+**Honesty check - what actually runs today:** a Rust library and a command line program (`phoenix-laser`) with 125 tests that run on a computer: turns an image into dots by dithering and writes the G-code of a laser that burns line by line with dynamic power and overscan, and a power-against-feed test grid. It has a window (built with `--features gui`) that opens a PNG or PGM picture, shows the passes of the laser coloured by power, lets the power, the feed and the dots be set, and exports the G-code, but the window has not been looked at on a screen yet; it has not been tried on a machine and it has not been checked against a collection of real files.
 
 ---
 
@@ -30,7 +30,7 @@
 |---|---|
 | Version | `0.0.3` |
 | Maturity | Scaffolding |
-| Tests | 74 |
+| Tests | 125 |
 | Stack | Rust |
 | On real hardware | Not tried: nothing here has run on a machine |
 
@@ -46,9 +46,9 @@ Each line is one part of this repository and the light says how far it is today.
 |---|---|---|
 | Core | 🟡 | turns an image into dots by dithering and writes the G-code of a laser that burns line by line with dynamic power and overscan, and a power-against-feed test grid; tested on a computer with normal and damaged input, not with a collection of real files. |
 | Command line | 🟡 | `phoenix-laser` runs the same functions as the library and prints the result; every error comes back as a message and a non-zero exit code. |
-| Tests | 🟡 | 74 tests pass (`cargo test`), with normal cases, edge cases and damaged input. |
+| Tests | 🟡 | 125 tests pass (`cargo test`), with normal cases, edge cases and damaged input. |
 | Security | 🟡 | Plain safe Rust (`forbid(unsafe_code)`): nothing panics on the files it is given and a bad value is an error with its reason; no independent review. |
-| Window | 🔴 | Planned: the egui window common to the suite; today there is only the command line. |
+| Window | 🟠 | Written (egui, `--features gui`): open or drop a picture, see the passes of the laser coloured by power, set the dots, the power and the feed, a calibration grid, zoom and pan, export; its logic is tested, but it has not been built or looked at on a screen yet. |
 | Real hardware | 🔴 | Not tried: nothing here has been run on a machine. |
 | Documentation | 🟡 | README in eight languages, the changelog and the two pictures drawn from `docs/`. |
 
@@ -62,7 +62,7 @@ Each line is one part of this repository and the light says how far it is today.
 
 ## 🧩 Role in EH3D
 
-EH3D-PHOENIX-LASER is one program of the EH3D Fabrication Suite. Today it works as a library and a command line; its window, in the look the other programs of the suite share, is planned. It reads and writes plain files, so it can be used on its own or between the other programs.
+EH3D-PHOENIX-LASER is one program of the EH3D Fabrication Suite. It works as a library and a command line and, built with `--features gui`, as a window in the look the other programs of the suite share. It reads and writes plain files, so it can be used on its own or between the other programs.
 
 ## 🏛️ Architecture
 
@@ -96,33 +96,11 @@ How the parts of this repository fit together: who uses it, what it holds and wh
 The library is `eh3d_phoenix_laser` (`use eh3d_phoenix_laser::...`); the command line is `phoenix-laser`. The commands are these; each prints its result on the standard output and reports an error on the standard error with a non-zero exit code. There is no network access.
 
 ```text
-EH3D-PHOENIX-LASER/
-├── src/
-│   ├── lib.rs                                   the library: what every command uses
-│   ├── main.rs                                  the command line
-│   ├── calibrate.rs                             a part of the logic
-│   ├── cli_args.rs                              the arguments of the command line, the same file in every small utility
-│   ├── dither.rs                                a part of the logic
-│   ├── gcode_out.rs                             the one way a G-code number is written and the standard header
-│   └── raster.rs                                a part of the logic
-├── tests/
-│   ├── dry_run.rs                               tests of --dry-run: it counts the same and writes nothing
-│   ├── laser.rs                                 tests of the library and the command line
-│   ├── readme.rs                                tests that run what the README and the run scripts promise
-│   └── strict.rs                                tests of the command line: options and words it does not know
-├── examples/
-│   └── gradient.pgm                             a sample to try the program with
-├── docs/
-│   ├── architecture.json                        data of the Architecture picture
-│   └── structure.json                           data of the Repository Structure picture
-├── tools/                                       CI check, README check and the picture tools
-├── images/                                      banner and the Architecture and Repository Structure pictures
-├── .github/                                     CI and release workflows, issue and pull-request templates
-├── eh3d.project.json                            manifest: version, role, maturity and build command
-├── Cargo.toml Cargo.lock                        the workspace and its locked dependencies
-├── CHANGELOG.md                                 what changed in each version
-├── SECURITY.md SUPPORT.md                       how to report a vulnerability and where to ask
-└── CONTRIBUTING.md CODE_OF_CONDUCT.md LICENSE   how to contribute, the code of conduct and the licence
+phoenix-laser engrave IMAGE OUT.nc --width-mm 50 [--dot-mm 0.1] [--feed 3000] [--power 50] [--smax 1000]
+              [--dither fs|atkinson|threshold] [--threshold 128] [--overscan MM|auto] [--accel 1000] [--origin X,Y] [--dry-run]
+phoenix-laser calibrate OUT.nc --powers 20,40,60,80 --feeds 1000,2000,3000 [--smax 1000]
+phoenix-laser info IMAGE
+phoenix-laser [gui] [IMAGE]                      the window (a build with --features gui); with no arguments it opens
 ```
 
 ## ⚙️ Configuration
@@ -131,17 +109,18 @@ There is no configuration file yet: what a person chooses is given as arguments 
 
 ## 🚀 Quick start
 
-You need a stable Rust toolchain (1.75 or newer). The repository EH3D-COMMON must be cloned beside this one: the reader of pictures is taken from it by path.
+You need a stable Rust toolchain (1.88 or newer). The repository EH3D-COMMON must be cloned beside this one: the reader of pictures is taken from it by path.
 
 ```bash
 cargo build --release
 cargo test
 cargo run --release -- engrave examples/gradient.pgm examples/gradient.nc --width-mm 16 --dot-mm 0.5 --overscan auto
+cargo run --release --features gui   # the window
 ```
 
 ## 🧪 Testing
 
-The suite has 74 tests (`cargo test`, run on Windows and Linux in the CI). They check the normal cases, the edge cases and damaged input: empty files, garbage and cut files never panic. The CI also runs `cargo fmt --check`, `cargo clippy` with warnings as errors and `python -I tools/ci_validate.py`.
+The suite has 125 tests (`cargo test`, run on Windows and Linux in the CI). They check the normal cases, the edge cases and damaged input: empty files, garbage and cut files never panic. The CI also runs `cargo fmt --check`, `cargo clippy` with warnings as errors and `python -I tools/ci_validate.py`.
 
 ## 🏗️ Build & Release
 
@@ -165,12 +144,18 @@ EH3D-PHOENIX-LASER/
 │   ├── cli_args.rs                              the arguments of the command line, the same file in every small utility
 │   ├── dither.rs                                a part of the logic
 │   ├── gcode_out.rs                             the one way a G-code number is written and the standard header
-│   └── raster.rs                                a part of the logic
+│   ├── raster.rs                                a part of the logic
+│   ├── browse.rs                                the list of files of the window that opens a file
+│   ├── gui.rs                                   the window (egui, with the gui feature): draws the state and passes on what the person does
+│   ├── lang.rs                                  the words of the window in the eight languages
+│   ├── viewport.rs                              zoom and pan of the picture, in plain numbers
+│   └── window.rs                                the state of the window without a screen: picture, settings, passes and export
 ├── tests/
 │   ├── dry_run.rs                               tests of --dry-run: it counts the same and writes nothing
 │   ├── laser.rs                                 tests of the library and the command line
 │   ├── readme.rs                                tests that run what the README and the run scripts promise
-│   └── strict.rs                                tests of the command line: options and words it does not know
+│   ├── strict.rs                                tests of the command line: options and words it does not know
+│   └── window_cli.rs                            tests that a build without the gui feature stays a command line
 ├── examples/
 │   └── gradient.pgm                             a sample to try the program with
 ├── docs/
@@ -192,14 +177,14 @@ EH3D-PHOENIX-LASER/
 
 **Known limits today**
 
-* It has no window yet: only the library and the command line exist.
+* The window has not been looked at on a screen yet and takes pictures only: vector contours are not cut.
 * It has not been tried on a machine nor with a collection of real files, and it has had no independent review.
 * It burns dots, not vectors (no contour cutting yet), the laser is the one of a GRBL controller with `M4`, and nothing has been tried on a real laser or material.
 
 **Next**
 
-* Cut vector contours with power that follows the speed, show the power density on the board before burning and add the window of the suite.
-* Add the window in the look shared by the programs of the suite, in the eight languages.
+* Cut vector contours with power that follows the speed and show the power density on the board before burning.
+* Look at the window on a screen and finish it.
 * Try it with real files and with the other programs of the suite.
 
 ## 🌍 Languages
