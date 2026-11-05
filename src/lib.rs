@@ -7,6 +7,7 @@
 pub use eh3d_image as image;
 pub mod browse;
 pub mod calibrate;
+pub mod cut;
 pub mod dither;
 pub mod dxf;
 pub mod flatten;
@@ -14,8 +15,11 @@ pub mod gcode_out;
 #[cfg(feature = "gui")]
 pub mod gui;
 pub mod lang;
+pub mod offset;
+pub mod order;
 pub mod raster;
 pub mod svg;
+pub mod vconfig;
 pub mod vector;
 pub mod viewport;
 pub mod window;
