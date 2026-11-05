@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="40mm" height="25mm" viewBox="0 0 40 25">
+  <!-- red: the outline of a plate with rounded corners and a hole, to cut; blue: a panel to engrave (filled) -->
+  <rect x="1" y="1" width="38" height="23" rx="3" fill="none" stroke="#ff0000"/>
+  <circle cx="7" cy="7" r="1.5" fill="none" stroke="#ff0000"/>
+  <rect x="12" y="8" width="20" height="9" fill="#0000ff" stroke="none"/>
+</svg>

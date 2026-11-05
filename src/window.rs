@@ -1967,6 +1967,25 @@ mod tests {
     }
 
     #[test]
+    fn the_travel_between_contours_is_drawn_only_when_it_is_asked_for() {
+        let g = "G21\nM4 S0\nG0 X10 Y0 S0\nG1 X10 Y5 S500\nS0\nG0 X0 Y0\n";
+        let (plain, _) = passes(g, 1000);
+        assert_eq!(plain.len(), 1, "only the G1 move is a pass");
+        let (all, _) = passes_of(g, 1000, true);
+        assert_eq!(all.len(), 3);
+        assert!(!all[0].burn && all[1].burn && !all[2].burn);
+        assert_eq!(
+            (all[0].x0, all[0].y0, all[0].x1, all[0].y1),
+            (0.0, 0.0, 10.0, 0.0)
+        );
+        assert_eq!(
+            (all[2].x0, all[2].y0, all[2].x1, all[2].y1),
+            (10.0, 5.0, 0.0, 0.0)
+        );
+        assert!((all[1].level - 0.5).abs() < 1e-12);
+    }
+
+    #[test]
     fn each_job_lists_the_files_it_can_open() {
         assert!(Job::OpenImage.extensions().contains(&"png"));
         assert!(Job::OpenImage.extensions().contains(&"pgm"));

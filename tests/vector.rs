@@ -523,3 +523,129 @@ fn the_same_job_twice_gives_the_same_program() {
         2
     );
 }
+
+/// The number in front of a word in the line the commands print ("246 mm cut").
+fn number_before(text: &str, word: &str) -> f64 {
+    let at = text
+        .find(word)
+        .unwrap_or_else(|| panic!("{word} is not in {text:?}"));
+    text[..at]
+        .trim_end()
+        .rsplit(' ')
+        .next()
+        .unwrap()
+        .parse()
+        .unwrap()
+}
+
+#[test]
+fn the_examples_are_cut_and_engraved_with_their_settings_file() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let cfg = root
+        .join("examples/plate.cfg")
+        .to_string_lossy()
+        .into_owned();
+    let s = Scratch::new("examples");
+    // (file, the layer that is engraved, the layer that is cut, the length cut in mm)
+    // The outline (38 x 23 mm, 122 mm; with round corners of 3 mm 116.85 mm) grows by 2 pi 0.075 mm at its corners and loses its two tabs of 1.5 mm; the hole (radius 1.5 mm) shrinks to 1.425 mm and is
+    // 8.95 mm long; both are cut twice at 300 mm/min. The panel of 20 x 9 mm is engraved with lines 0.2 mm apart: 180 / 0.2 = 900 mm.
+    for (name, engraved, cut, low, high) in [
+        ("plate.svg", "#0000ff", "#ff0000", 245.5, 247.0),
+        ("plate.dxf", "mark", "cut", 256.0, 257.5),
+    ] {
+        let input = root
+            .join("examples")
+            .join(name)
+            .to_string_lossy()
+            .into_owned();
+        let out = s.path(&format!("{name}.nc"));
+        let (c, stdout, e) = run(&["cut", &input, &out, "--config", &cfg]);
+        assert_eq!(c, Some(0), "{name}: {e}");
+        assert!(stdout.starts_with("2 layers, 3 paths, "), "{stdout}");
+        let mm_cut = number_before(&stdout, " mm cut");
+        assert!(mm_cut > low && mm_cut < high, "{name}: {mm_cut}");
+        assert!(
+            (number_before(&stdout, " mm engraved") - 900.0).abs() < 1.0,
+            "{stdout}"
+        );
+        let text = fs::read_to_string(&out).unwrap();
+        verify_gcode(&text, 1000, None).unwrap();
+        let layers: Vec<&str> = text.lines().filter(|l| l.starts_with("; layer ")).collect();
+        assert!(
+            layers[0].starts_with(&format!("; layer {engraved}: engrave, 25 %, 1500 mm/min")),
+            "{layers:?}"
+        );
+        assert!(
+            layers[1].starts_with(&format!("; layer {cut}: cut, 90 %, 300 mm/min, 2 pass(es)")),
+            "{layers:?}"
+        );
+        let c = code(&text);
+        // 25 % and 90 % of 1000, the speeds of the two layers, and the focus going down 0.1 mm for the second pass and coming back
+        for want in ["F1500", "F300", "G0 Z0", "G0 Z-0.1"] {
+            assert!(c.contains(&want), "{name}: {want}");
+        }
+        assert!(c.iter().any(|l| l.ends_with(" S250")) && c.iter().any(|l| l.ends_with(" S900")));
+        // the layers listing agrees
+        let (c, listing, _) = run(&["layers", &input, "--config", &cfg]);
+        assert_eq!(c, Some(0));
+        assert!(
+            listing.contains("engrave at 25 % and 1500 mm/min, 1 pass(es)")
+                && listing.contains("cut at 90 % and 300 mm/min, 2 pass(es)"),
+            "{listing}"
+        );
+    }
+}
+
+#[test]
+fn every_setting_the_file_reads_is_documented_and_every_documented_setting_is_read() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let source = fs::read_to_string(root.join("src/vconfig.rs")).unwrap();
+    let doc = fs::read_to_string(root.join("docs/vector-settings.md")).unwrap();
+    let layer = source.find("fn set_layer").unwrap();
+    let global = source.find("fn set_global").unwrap();
+    let end = source.find("pub fn parse").unwrap();
+    let mut keys: Vec<String> = Vec::new();
+    // the keys of a layer are the arms `"key" => ...` of set_layer
+    for line in source[layer..global].lines() {
+        if let Some((key, after)) = line
+            .trim()
+            .strip_prefix('"')
+            .and_then(|r| r.split_once('"'))
+        {
+            if after.trim_start().starts_with("=>") {
+                keys.push(key.to_string());
+            }
+        }
+    }
+    let layer_keys = keys.len();
+    // the others are the arms `("section", "key") => ...` of set_global
+    for line in source[global..end].lines() {
+        if let Some(rest) = line.trim().strip_prefix("(\"") {
+            // `limits", "max_depth") => ...` splits into the section, ", ", the key and the rest
+            let parts: Vec<&str> = rest.split('"').collect();
+            if parts.len() > 3 && parts[1] == ", " {
+                keys.push(parts[2].to_string());
+            }
+        }
+    }
+    assert_eq!(layer_keys, 12, "{keys:?}");
+    assert_eq!(keys.len(), 12 + 30, "{keys:?}");
+    for k in &keys {
+        assert!(
+            doc.contains(&format!("`{k}`")),
+            "the setting {k} is not in docs/vector-settings.md"
+        );
+    }
+    // the first cell of a row of the tables of keys holds names in code format, and each one is a key that is read
+    for line in doc.lines().filter(|l| l.starts_with("| `")) {
+        let cell = line.trim_start_matches('|').split('|').next().unwrap();
+        for word in cell.split('`').skip(1).step_by(2) {
+            if word.chars().all(|c| c.is_ascii_lowercase() || c == '_') {
+                assert!(
+                    keys.iter().any(|k| k == word),
+                    "{word} is documented but not read"
+                );
+            }
+        }
+    }
+}
