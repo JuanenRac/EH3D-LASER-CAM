@@ -38,7 +38,7 @@ fn noise(w: usize, h: usize, seed: u64) -> Dots {
             s = s
                 .wrapping_mul(6364136223846793005)
                 .wrapping_add(1442695040888963407);
-            (s >> 33) % 3 != 0
+            !(s >> 33).is_multiple_of(3)
         })
         .collect();
     Dots { w, h, burn }
@@ -428,7 +428,7 @@ fn tmp(name: &str) -> String {
 fn pgm(name: &str, w: usize, h: usize, v: u8) -> String {
     let path = tmp(name);
     let mut b = format!("P5\n{w} {h}\n255\n").into_bytes();
-    b.extend(std::iter::repeat(v).take(w * h));
+    b.extend(std::iter::repeat_n(v, w * h));
     std::fs::write(&path, b).unwrap();
     path
 }
