@@ -1140,7 +1140,7 @@ pub fn read_svg(bytes: &[u8], opts: &ReadOptions) -> Result<Drawing, String> {
                 if SKIPPED.contains(&name.as_str()) {
                     if matches!(
                         name.as_str(),
-                        "script" | "image" | "use" | "foreignObject" | "text"
+                        "script" | "image" | "use" | "foreignObject" | "text" | "style"
                     ) {
                         col.warn(format!("{name} is not supported and was skipped"));
                     }
@@ -1521,6 +1521,7 @@ mod tests {
               <image href="http://example.org/a.png" width="10" height="10"/>
               <use href="a"/>
               <text x="0" y="0">hello</text>
+              <style>.a { stroke: red }</style>
               <path d="M0 0 L1 0" stroke="red"/>
             </svg>"#,
         );
@@ -1529,6 +1530,10 @@ mod tests {
         assert!(d.warnings.iter().any(|w| w.contains("script")));
         assert!(d.warnings.iter().any(|w| w.contains("image")));
         assert!(d.warnings.iter().any(|w| w.contains("use")));
+        assert!(
+            d.warnings.iter().any(|w| w.starts_with("style")),
+            "the colours of a class are not read"
+        );
     }
 
     #[test]
