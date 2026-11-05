@@ -731,7 +731,7 @@ pub fn verify_gcode(gcode: &str, s_max: u32, bed: Option<Pt>) -> Result<(), Stri
                 ('Z', _) => z = Some(v),
                 ('F', _) => f = v,
                 ('S', _) => {
-                    if v < 0.0 || v > f64::from(s_max) {
+                    if !(0.0..=f64::from(s_max)).contains(&v) {
                         return Err(format!("line {at}: S{v} is outside of 0 to {s_max}"));
                     }
                     s = v;
@@ -758,7 +758,7 @@ pub fn verify_gcode(gcode: &str, s_max: u32, bed: Option<Pt>) -> Result<(), Stri
                 return Err(format!("line {at}: the focus moves with the laser on"));
             }
             if let Some((bx, by)) = bed {
-                let out = |v: Option<f64>, hi: f64| v.is_some_and(|v| v < -1e-6 || v > hi + 1e-6);
+                let out = |v: Option<f64>, hi: f64| v.is_some_and(|v| !(-1e-6..=hi + 1e-6).contains(&v));
                 if out(x, bx) || out(y, by) {
                     return Err(format!("line {at}: a move outside of the bed"));
                 }
@@ -1402,7 +1402,7 @@ mod tests {
             for k in 0..(1 + round % 6) {
                 let n = 2 + (next().abs() as usize) % 7;
                 let pts: Vec<Pt> = (0..n).map(|_| (next(), next())).collect();
-                shapes.push(shape(if k % 2 == 0 { "a" } else { "b" }, &pts, k % 3 != 0));
+                shapes.push(shape(if k % 2 == 1 { "b" } else { "a" }, &pts, k % 3 > 0));
             }
             if let Ok(p) = plan(&dxf(shapes), &s) {
                 verify_gcode(&p.gcode, 1000, None).unwrap();

@@ -689,8 +689,8 @@ impl Lexer<'_> {
             };
             self.i += off;
             let rest = &self.s[self.i..];
-            if rest.starts_with("<!--") {
-                let end = rest[4..].find("-->").ok_or("a comment is not closed")?;
+            if let Some(inside) = rest.strip_prefix("<!--") {
+                let end = inside.find("-->").ok_or("a comment is not closed")?;
                 self.i += 4 + end + 3;
                 continue;
             }
@@ -1463,7 +1463,7 @@ mod tests {
         let pts = &d.shapes[0].pts;
         assert!(pts
             .iter()
-            .all(|p| p.0 >= -1e-9 && p.0 <= 20.0 + 1e-9 && p.1 >= -1e-9 && p.1 <= 10.0 + 1e-9));
+            .all(|p| (-1e-9..=20.0 + 1e-9).contains(&p.0) && (-1e-9..=10.0 + 1e-9).contains(&p.1)));
         // the corner (0,0) is not a point of the shape, and (2,0) is
         assert!(!pts.iter().any(|p| close(*p, (0.0, 0.0))));
         assert!(pts.iter().any(|p| close(*p, (2.0, 0.0))));

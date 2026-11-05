@@ -140,10 +140,8 @@ pub fn containers(items: &[Contour], max_closed: usize) -> Option<Vec<Vec<usize>
             let (lo, hi) = boxes[k];
             let ring = &items[j].pts;
             let probe = item.pts.iter().take(8).find(|p| {
-                p.0 >= lo.0
-                    && p.0 <= hi.0
-                    && p.1 >= lo.1
-                    && p.1 <= hi.1
+                (lo.0..=hi.0).contains(&p.0)
+                    && (lo.1..=hi.1).contains(&p.1)
                     && dist_to_ring(**p, ring) > 1e-6
             });
             if let Some(&p) = probe {
@@ -411,7 +409,7 @@ mod tests {
 
     #[test]
     fn what_is_inside_what_is_found() {
-        let items = vec![
+        let items = [
             square(0.0, 0.0, 10.0),            // 0: the outer one
             square(4.0, 4.0, 2.0),             // 1: inside 0
             square(4.5, 4.5, 1.0),             // 2: inside 0 and 1
@@ -433,7 +431,7 @@ mod tests {
     #[test]
     fn two_equal_squares_are_not_inside_each_other() {
         // all the points of one are on the edge of the other
-        let items = vec![square(0.0, 0.0, 10.0), square(0.0, 0.0, 10.0)];
+        let items = [square(0.0, 0.0, 10.0), square(0.0, 0.0, 10.0)];
         let c = containers(&items, 100).unwrap();
         assert!(c[0].is_empty() && c[1].is_empty());
     }
@@ -441,7 +439,7 @@ mod tests {
     #[test]
     fn a_contour_is_cut_before_the_one_it_lies_inside_even_when_that_one_is_nearer() {
         // from (0,0) the outer square (a corner at (0,0)) is at distance 0 and the inner one at 5.66, but the inner one goes first
-        let items = vec![square(0.0, 0.0, 10.0), square(4.0, 4.0, 2.0)];
+        let items = [square(0.0, 0.0, 10.0), square(4.0, 4.0, 2.0)];
         let parents = containers(&items, 10).unwrap();
         let v = sequence(&items, &parents, (0.0, 0.0), &OPTS);
         assert_eq!(v.iter().map(|x| x.index).collect::<Vec<_>>(), vec![1, 0]);
@@ -453,7 +451,7 @@ mod tests {
     #[test]
     fn a_closed_contour_starts_at_the_vertex_nearest_to_the_head() {
         // a square written from (0,0); the head is at (11,11), nearest to (10,10), the third vertex
-        let items = vec![square(0.0, 0.0, 10.0)];
+        let items = [square(0.0, 0.0, 10.0)];
         let v = sequence(&items, &[Vec::new()], (11.0, 11.0), &OPTS);
         assert_eq!(v[0].start, 2);
         let pts = v[0].points(&items);
@@ -472,7 +470,7 @@ mod tests {
     #[test]
     fn the_nearest_open_path_is_next_and_is_taken_from_its_nearer_end() {
         // from (0,0): A (written from its far end) is entered at (0,0), then C at 2 (1 away), then B at 10 (7 away): 0 + 1 + 7 = 8
-        let items = vec![
+        let items = [
             open(&[(1.0, 0.0), (0.0, 0.0)]),   // A
             open(&[(10.0, 0.0), (11.0, 0.0)]), // B
             open(&[(2.0, 0.0), (3.0, 0.0)]),   // C
@@ -501,7 +499,7 @@ mod tests {
         // points (2,3) (4,5) (5,1) (9,9) (0,4) seen from (0,0) (each is a square of 0.001, so the numbers are exact to 0.02).
         // Nearest neighbour: (2,3) 3.606, (0,4) 2.236, (4,5) 4.123, (5,1) 4.123, (9,9) 8.944 = 23.03.
         // 2-opt reverses the run of the first two: (0,4) 4, (2,3) 2.236, (5,1) 3.606, (4,5) 4.123, (9,9) 6.403 = 20.37.
-        let items = vec![
+        let items = [
             dot(2.0, 3.0),
             dot(4.0, 5.0),
             dot(5.0, 1.0),
@@ -540,7 +538,7 @@ mod tests {
             let items: Vec<Contour> = (0..(6 + round % 7))
                 .map(|k| {
                     let (x, y) = (next(), next());
-                    if k % 2 == 0 {
+                    if k % 2 == 1 {
                         open(&[(x, y), (x + 1.0 + next() / 10.0, y + 0.5)])
                     } else {
                         square(x, y, 0.5)
@@ -615,7 +613,7 @@ mod tests {
     #[test]
     fn nothing_is_lost_when_the_containment_has_a_cycle() {
         // two contours each said to be inside the other: they are both cut
-        let items = vec![square(0.0, 0.0, 1.0), square(5.0, 5.0, 1.0)];
+        let items = [square(0.0, 0.0, 1.0), square(5.0, 5.0, 1.0)];
         let v = sequence(&items, &[vec![1], vec![0]], (0.0, 0.0), &OPTS);
         assert_eq!(v.len(), 2);
     }
