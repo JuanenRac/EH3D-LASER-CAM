@@ -2,7 +2,7 @@
 name = "eh3d-phoenix-laser"
 version = "0.0.3"
 edition = "2021"
-rust-version = "1.75"
+rust-version = "1.88"
 description = "Laser engraving from an image: dithering (threshold, Floyd-Steinberg, Atkinson), raster G-code with dynamic power and overscan, and a power-against-feed calibration grid"
 license = "GPL-3.0-or-later"
 repository = "https://github.com/JuanenRac/EH3D-PHOENIX-LASER"
@@ -16,9 +16,22 @@ path = "src/lib.rs"
 name = "phoenix-laser"
 path = "src/main.rs"
 
+[features]
+default = []
+# the window (egui, with the icon of the program): `cargo run --release --features gui`
+gui = ["dep:eframe", "dep:png"]
+
 [dependencies]
 # the reader of PGM and PNG pictures, shared with the other programs that work from a picture
 eh3d-image = { version = ">=0.0.1", path = "../EH3D-COMMON/crates/image" }
+
+# the window
+eframe = { version = "0.37.0", default-features = false, features = ["glow", "default_fonts"], optional = true }
+png = { version = "0.17", optional = true }
+
+# the window of Linux needs a windowing system chosen at build time (X11 and Wayland); Windows and macOS have their own
+[target.'cfg(target_os = "linux")'.dependencies]
+eframe = { version = "0.37.0", default-features = false, features = ["glow", "default_fonts", "x11", "wayland"], optional = true }
 
 [dev-dependencies]
 # the tests make their own PNG files
@@ -27,3 +40,7 @@ png = "0.17"
 [profile.release]
 opt-level = 3
 lto = true
+
+# the icon and the version information of the Windows executable (build.rs; nothing on other systems)
+[target.'cfg(windows)'.build-dependencies]
+winresource = "0.1.34"

@@ -20,6 +20,7 @@ const HELP: &str = "phoenix-laser: laser engraving from an image
                 [--dither fs|atkinson|threshold] [--threshold 128] [--overscan MM|auto] [--accel 1000] [--origin X,Y] [--dry-run]
   phoenix-laser calibrate OUT.nc --powers 20,40,60,80 --feeds 1000,2000,3000 [--smax 1000]
   phoenix-laser info IMAGE
+  phoenix-laser [gui] [IMAGE]                    the window (a build with --features gui): with no arguments, with an image or with gui it opens; the commands above never open it
 
 IMAGE is a PNG or a PGM file. --dry-run works the engraving out and counts it but writes nothing (OUT.nc may then be left out). --power is a percent of full power; --smax is the spindle value that is full power for the controller (GRBL: $30).
 The engraving is made of dots of --dot-mm on a side, so the image is scaled to --width-mm / --dot-mm dots wide.";
@@ -34,6 +35,10 @@ fn run(mut args: Vec<String>) -> Result<(), String> {
         return Ok(());
     }
     let cmd = args.remove(0);
+    if cmd == "gui" {
+        // a build with the window never gets here (main opens it): this one is only a command line
+        return Err("this build has no window: build it with --features gui".into());
+    }
     match cmd.as_str() {
         "engrave" => {
             let width = flag(&mut args, "--width-mm")?
@@ -164,8 +169,43 @@ fn run(mut args: Vec<String>) -> Result<(), String> {
     }
 }
 
+/// Whether the program opens its window instead of running a command, and the picture to open in it: no arguments, `gui` (with a picture or without), or a single picture given by the
+/// system to open (a name with an extension that is a file; the commands have none).
+#[cfg(feature = "gui")]
+fn window_request(args: &[String]) -> Option<Option<String>> {
+    match args {
+        [] => Some(None),
+        [a] if a == "gui" => Some(None),
+        [a, f] if a == "gui" => Some(Some(f.clone())),
+        [f] if !f.starts_with('-')
+            && std::path::Path::new(f).extension().is_some()
+            && std::path::Path::new(f).is_file() =>
+        {
+            Some(Some(f.clone()))
+        }
+        _ => None,
+    }
+}
+
+#[cfg(feature = "gui")]
+fn open_window(picture: Option<String>) -> ExitCode {
+    let lang = eh3d_phoenix_laser::lang::Lang::from_env();
+    match eh3d_phoenix_laser::gui::run(picture.map(std::path::PathBuf::from), lang) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(e) => {
+            eprintln!("error: the window could not be opened: {e}");
+            ExitCode::from(1)
+        }
+    }
+}
+
 fn main() -> ExitCode {
-    match run(env::args().skip(1).collect()) {
+    let args: Vec<String> = env::args().skip(1).collect();
+    #[cfg(feature = "gui")]
+    if let Some(picture) = window_request(&args) {
+        return open_window(picture);
+    }
+    match run(args) {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
             eprintln!("error: {e}");
