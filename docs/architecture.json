@@ -1,8 +1,8 @@
 {
   "repo": "EH3D-PHOENIX-LASER",
   "ecosystem": "eh3d",
-  "tagline": "An image, dots, and the G-code of a laser.",
-  "description": "EH3D-PHOENIX-LASER is a Rust library and command line that turn an image into dots by dithering and write the G-code of a laser that burns line by line with dynamic power. Built with the gui feature it also has a window (egui) that opens a picture, shows the passes of the laser coloured by power, sets the power and the feed and exports the G-code.",
+  "tagline": "An image or a drawing, dots or contours, and the G-code of a laser.",
+  "description": "EH3D-PHOENIX-LASER is a Rust library and command line that turn an image into dots by dithering and write the G-code of a laser that burns line by line with dynamic power, and that read SVG and DXF drawings and write the G-code that cuts their contours and engraves their shapes, layer by layer, with the settings of each layer in a file. Built with the gui feature it also has a window (egui) that opens a picture or a drawing, shows the path of the laser, sets the power and the feed and exports the G-code.",
   "columns": [
     "WHO USES IT",
     "THIS REPOSITORY",
@@ -15,8 +15,8 @@
       "level": "external",
       "title": "A person",
       "lines": [
-        "has an image and a laser",
-        "and a material to try"
+        "has an image or a drawing",
+        "and a laser to try"
       ]
     },
     {
@@ -67,6 +67,37 @@
       ],
       "code": [
         "src/calibrate.rs::pub fn grid"
+      ]
+    },
+    {
+      "id": "reader",
+      "column": 1,
+      "level": "tested",
+      "title": "drawings",
+      "lines": [
+        "SVG and DXF to shapes in mm,",
+        "with limits and no scripts"
+      ],
+      "code": [
+        "src/svg.rs::pub fn read_svg",
+        "src/dxf.rs::pub fn read_dxf"
+      ]
+    },
+    {
+      "id": "cutting",
+      "column": 1,
+      "level": "tested",
+      "title": "cut and engrave",
+      "lines": [
+        "layers, inside contours first,",
+        "beam width, bridges, hatch,",
+        "and a checked G-code"
+      ],
+      "code": [
+        "src/cut.rs::pub fn plan",
+        "src/order.rs::pub fn sequence",
+        "src/offset.rs::pub fn offset_ring",
+        "src/vconfig.rs::pub fn parse"
       ]
     },
     {
@@ -129,6 +160,12 @@
       "level": "config"
     },
     {
+      "from": "person",
+      "to": "reader",
+      "label": "cut",
+      "level": "tested"
+    },
+    {
       "from": "image",
       "to": "common",
       "level": "tested"
@@ -143,10 +180,15 @@
       "to": "window",
       "label": "window",
       "level": "untested"
+    },
+    {
+      "from": "cutting",
+      "to": "laser",
+      "level": "tested"
     }
   ],
   "legend": {
-    "tested": "covered by tests on a computer (125 tests)",
+    "tested": "covered by tests on a computer (294 tests)",
     "config": "planned, not used today",
     "external": "a person, a file or another repository",
     "untested": "written, not built or looked at on a screen yet"

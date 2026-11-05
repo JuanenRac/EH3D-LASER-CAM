@@ -43,14 +43,14 @@
         {
           "name": "main.rs",
           "desc": {
-            "en": "the command line",
-            "es": "la línea de comandos",
-            "de": "die Kommandozeile",
-            "fr": "la ligne de commande",
-            "it": "la riga di comando",
-            "ja": "コマンドライン",
-            "zh": "命令行",
-            "pt": "a linha de comandos"
+            "en": "the command line: engrave, calibrate, info, cut, vector and layers",
+            "es": "la línea de comandos: engrave, calibrate, info, cut, vector y layers",
+            "de": "die Befehlszeile: engrave, calibrate, info, cut, vector und layers",
+            "fr": "la ligne de commande : engrave, calibrate, info, cut, vector et layers",
+            "it": "la riga di comando: engrave, calibrate, info, cut, vector e layers",
+            "ja": "コマンドライン：engrave、calibrate、info、cut、vector、layers",
+            "zh": "命令行：engrave、calibrate、info、cut、vector 和 layers",
+            "pt": "a linha de comandos: engrave, calibrate, info, cut, vector e layers"
           }
         },
         {
@@ -119,6 +119,110 @@
           }
         },
         {
+          "name": "vector.rs",
+          "desc": {
+            "en": "a drawing once read: shapes in mm, layers, limits and the small geometry",
+            "es": "un dibujo ya leído: formas en mm, capas, límites y la geometría básica",
+            "de": "eine gelesene Zeichnung: Formen in mm, Ebenen, Grenzen und einfache Geometrie",
+            "fr": "un dessin lu : formes en mm, calques, limites et géométrie de base",
+            "it": "un disegno letto: forme in mm, livelli, limiti e geometria di base",
+            "ja": "読み込んだ図面：mm の図形、レイヤー、上限、基本の幾何",
+            "zh": "读入的图纸：毫米图形、图层、限制和基础几何",
+            "pt": "um desenho lido: formas em mm, camadas, limites e a geometria básica"
+          }
+        },
+        {
+          "name": "flatten.rs",
+          "desc": {
+            "en": "curves cut into straight pieces within a tolerance (Bezier, arcs)",
+            "es": "curvas en tramos rectos dentro de una tolerancia (Bézier, arcos)",
+            "de": "Kurven in gerade Stücke innerhalb einer Toleranz (Bézier, Bögen)",
+            "fr": "courbes en segments droits dans une tolérance (Bézier, arcs)",
+            "it": "curve in tratti rettilinei entro una tolleranza (Bézier, archi)",
+            "ja": "許容差内で曲線を直線に分割（ベジェ、円弧）",
+            "zh": "在容差内将曲线分段为直线（贝塞尔、圆弧）",
+            "pt": "curvas em troços retos dentro de uma tolerância (Bézier, arcos)"
+          }
+        },
+        {
+          "name": "svg.rs",
+          "desc": {
+            "en": "the SVG reader: a safe subset, no scripts, images or entities",
+            "es": "el lector de SVG: un subconjunto seguro, sin scripts, imágenes ni entidades",
+            "de": "der SVG-Leser: eine sichere Teilmenge, ohne Skripte, Bilder oder Entitäten",
+            "fr": "le lecteur SVG : un sous-ensemble sûr, sans scripts, images ni entités",
+            "it": "il lettore SVG: un sottoinsieme sicuro, senza script, immagini o entità",
+            "ja": "SVG リーダー：安全なサブセット（スクリプト・画像・エンティティなし）",
+            "zh": "SVG 读取器：安全子集，不含脚本、图像和实体",
+            "pt": "o leitor de SVG: um subconjunto seguro, sem scripts, imagens nem entidades"
+          }
+        },
+        {
+          "name": "dxf.rs",
+          "desc": {
+            "en": "the DXF reader: lines, polylines, arcs, circles and splines, with units",
+            "es": "el lector de DXF: líneas, polilíneas, arcos, círculos y splines, con unidades",
+            "de": "der DXF-Leser: Linien, Polylinien, Bögen, Kreise und Splines, mit Einheiten",
+            "fr": "le lecteur DXF : lignes, polylignes, arcs, cercles et splines, avec unités",
+            "it": "il lettore DXF: linee, polilinee, archi, cerchi e spline, con unità",
+            "ja": "DXF リーダー：線、ポリライン、円弧、円、スプライン（単位つき）",
+            "zh": "DXF 读取器：直线、多段线、圆弧、圆和样条，含单位",
+            "pt": "o leitor de DXF: linhas, polilinhas, arcos, círculos e splines, com unidades"
+          }
+        },
+        {
+          "name": "offset.rs",
+          "desc": {
+            "en": "moving a contour sideways by the width of the beam, checked edge by edge",
+            "es": "desplazar un contorno de lado el ancho del haz, comprobado arista a arista",
+            "de": "Kontur um die Strahlbreite seitlich versetzen, Kante für Kante geprüft",
+            "fr": "décaler un contour de la largeur du faisceau, vérifié arête par arête",
+            "it": "spostare un contorno di lato della larghezza del fascio, verificato spigolo per spigolo",
+            "ja": "ビーム幅だけ輪郭を横にずらす（辺ごとに検証）",
+            "zh": "将轮廓按光束宽度侧移，逐边校验",
+            "pt": "deslocar um contorno de lado pela largura do feixe, verificado aresta a aresta"
+          }
+        },
+        {
+          "name": "order.rs",
+          "desc": {
+            "en": "the order of the cuts: loose lines joined, inside first, short travel",
+            "es": "el orden de los cortes: líneas sueltas unidas, lo de dentro primero, poco desplazamiento",
+            "de": "die Reihenfolge der Schnitte: lose Linien verbunden, Inneres zuerst, kurzer Leerweg",
+            "fr": "l'ordre des découpes : lignes jointes, l'intérieur d'abord, peu de déplacement",
+            "it": "l'ordine dei tagli: linee unite, prima l'interno, poco spostamento",
+            "ja": "切断の順序：線の結合、内側から、移動を短く",
+            "zh": "切割顺序：合并散线、先内后外、空移最短",
+            "pt": "a ordem dos cortes: linhas unidas, o interior primeiro, pouco deslocamento"
+          }
+        },
+        {
+          "name": "cut.rs",
+          "desc": {
+            "en": "from a drawing to G-code: cut, tabs, hatch, passes and the safety check",
+            "es": "del dibujo al G-code: corte, puentes, rayado, pasadas y la comprobación de seguridad",
+            "de": "von der Zeichnung zum G-Code: Schnitt, Stege, Schraffur, Durchgänge und Sicherheitsprüfung",
+            "fr": "du dessin au G-code : découpe, ponts, hachures, passes et vérification de sécurité",
+            "it": "dal disegno al G-code: taglio, ponticelli, tratteggio, passate e verifica di sicurezza",
+            "ja": "図面から G-code へ：切断、タブ、ハッチ、パス、安全確認",
+            "zh": "从图纸到 G-code：切割、连接桥、填充、遍数和安全检查",
+            "pt": "do desenho ao G-code: corte, pontes, hachura, passagens e a verificação de segurança"
+          }
+        },
+        {
+          "name": "vconfig.rs",
+          "desc": {
+            "en": "the settings file of the vector work: limits, machine and each layer",
+            "es": "el fichero de ajustes del trabajo vectorial: límites, máquina y cada capa",
+            "de": "die Einstellungsdatei der Vektorarbeit: Grenzen, Maschine und jede Ebene",
+            "fr": "le fichier de réglages du travail vectoriel : limites, machine et chaque calque",
+            "it": "il file di impostazioni del lavoro vettoriale: limiti, macchina e ogni livello",
+            "ja": "ベクター作業の設定ファイル：上限、機械、各レイヤー",
+            "zh": "矢量作业的设置文件：限制、机器和各图层",
+            "pt": "o ficheiro de definições do trabalho vetorial: limites, máquina e cada camada"
+          }
+        },
+        {
           "name": "browse.rs",
           "desc": {
             "en": "the list of files of the window that opens a file",
@@ -173,14 +277,14 @@
         {
           "name": "window.rs",
           "desc": {
-            "en": "the state of the window without a screen: picture, settings, passes and export",
-            "es": "el estado de la ventana sin pantalla: imagen, ajustes, pasadas y exportación",
-            "de": "der Zustand des Fensters ohne Bildschirm: Bild, Einstellungen, Durchgänge, Export",
-            "fr": "l'état de la fenêtre sans écran : image, réglages, passes et export",
-            "it": "lo stato della finestra senza schermo: immagine, impostazioni, passaggi ed esportazione",
-            "ja": "画面なしのウィンドウの状態：画像、設定、走査、書き出し",
-            "zh": "不需要屏幕的窗口状态：图像、设置、扫描路径和导出",
-            "pt": "o estado da janela sem ecrã: imagem, definições, passagens e exportação"
+            "en": "the state of the window without a screen: picture or drawing, settings, layers, passes and export",
+            "es": "el estado de la ventana sin pantalla: imagen o dibujo, ajustes, capas, pasadas y exportación",
+            "de": "der Zustand des Fensters ohne Bildschirm: Bild oder Zeichnung, Einstellungen, Ebenen, Durchgänge und Export",
+            "fr": "l'état de la fenêtre sans écran : image ou dessin, réglages, calques, passes et export",
+            "it": "lo stato della finestra senza schermo: immagine o disegno, impostazioni, livelli, passate ed esportazione",
+            "ja": "画面なしのウィンドウの状態：画像または図面、設定、レイヤー、パス、書き出し",
+            "zh": "无屏幕的窗口状态：图像或图纸、设置、图层、遍数和导出",
+            "pt": "o estado da janela sem ecrã: imagem ou desenho, definições, camadas, passagens e exportação"
           }
         }
       ]
@@ -243,6 +347,19 @@
           }
         },
         {
+          "name": "vector.rs",
+          "desc": {
+            "en": "tests of cutting from drawings: commands, examples, hostile files and the check of the G-code",
+            "es": "pruebas de corte desde dibujos: órdenes, ejemplos, ficheros hostiles y la comprobación del G-code",
+            "de": "Tests des Schneidens aus Zeichnungen: Befehle, Beispiele, feindliche Dateien und die Prüfung des G-Codes",
+            "fr": "tests de la découpe depuis des dessins : commandes, exemples, fichiers hostiles et vérification du G-code",
+            "it": "test del taglio da disegni: comandi, esempi, file ostili e verifica del G-code",
+            "ja": "図面からの切断のテスト：コマンド、サンプル、悪意あるファイル、G-code の確認",
+            "zh": "图纸切割测试：命令、示例、恶意文件和 G-code 检查",
+            "pt": "testes do corte a partir de desenhos: comandos, exemplos, ficheiros hostis e a verificação do G-code"
+          }
+        },
+        {
           "name": "window_cli.rs",
           "desc": {
             "en": "tests that a build without the gui feature stays a command line",
@@ -273,6 +390,45 @@
             "ja": "試すためのサンプル",
             "zh": "试用的示例",
             "pt": "um exemplo para experimentar o programa"
+          }
+        },
+        {
+          "name": "plate.svg",
+          "desc": {
+            "en": "a plate with a hole and a panel to engrave (SVG)",
+            "es": "una placa con un agujero y un panel para grabar (SVG)",
+            "de": "eine Platte mit Loch und einer Fläche zum Gravieren (SVG)",
+            "fr": "une plaque avec un trou et un panneau à graver (SVG)",
+            "it": "una piastra con un foro e un pannello da incidere (SVG)",
+            "ja": "穴と彫刻パネルのある板（SVG）",
+            "zh": "带孔和待雕刻面板的板（SVG）",
+            "pt": "uma placa com um furo e um painel para gravar (SVG)"
+          }
+        },
+        {
+          "name": "plate.dxf",
+          "desc": {
+            "en": "the same plate as a DXF",
+            "es": "la misma placa como DXF",
+            "de": "dieselbe Platte als DXF",
+            "fr": "la même plaque en DXF",
+            "it": "la stessa piastra in DXF",
+            "ja": "同じ板の DXF",
+            "zh": "同一块板的 DXF",
+            "pt": "a mesma placa em DXF"
+          }
+        },
+        {
+          "name": "plate.cfg",
+          "desc": {
+            "en": "the settings of its layers: power, speed, passes, beam width, tabs and hatch",
+            "es": "los ajustes de sus capas: potencia, velocidad, pasadas, ancho del haz, puentes y rayado",
+            "de": "die Einstellungen seiner Ebenen: Leistung, Geschwindigkeit, Durchgänge, Strahlbreite, Stege und Schraffur",
+            "fr": "les réglages de ses calques : puissance, vitesse, passes, largeur du faisceau, ponts et hachures",
+            "it": "le impostazioni dei suoi livelli: potenza, velocità, passate, larghezza del fascio, ponticelli e tratteggio",
+            "ja": "各レイヤーの設定：出力、速度、パス数、ビーム幅、タブ、ハッチ",
+            "zh": "各图层的设置：功率、速度、遍数、光束宽度、连接桥和填充",
+            "pt": "as definições das suas camadas: potência, velocidade, passagens, largura do feixe, pontes e hachura"
           }
         }
       ]
@@ -306,6 +462,19 @@
             "ja": "構成図のデータ",
             "zh": "结构图数据",
             "pt": "dados da imagem de Estrutura"
+          }
+        },
+        {
+          "name": "vector-settings.md",
+          "desc": {
+            "en": "the settings file of the vector work, key by key",
+            "es": "el fichero de ajustes del trabajo vectorial, clave por clave",
+            "de": "die Einstellungsdatei der Vektorarbeit, Schlüssel für Schlüssel",
+            "fr": "le fichier de réglages du travail vectoriel, clé par clé",
+            "it": "il file di impostazioni del lavoro vettoriale, chiave per chiave",
+            "ja": "ベクター作業の設定ファイルをキーごとに説明",
+            "zh": "矢量作业设置文件，逐项说明",
+            "pt": "o ficheiro de definições do trabalho vetorial, chave a chave"
           }
         }
       ]
