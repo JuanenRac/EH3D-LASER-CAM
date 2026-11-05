@@ -1020,8 +1020,7 @@ fn shape(
         }
         "polyline" | "polygon" => {
             let v = numbers(get(attrs, "points").unwrap_or(""))?;
-            let mut pairs = v.chunks_exact(2);
-            for (k, p) in pairs.by_ref().enumerate() {
+            for (k, p) in v.as_chunks::<2>().0.iter().enumerate() {
                 if k == 0 {
                     b.begin((p[0], p[1]))?;
                 } else {

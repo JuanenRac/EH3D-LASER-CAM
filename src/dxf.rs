@@ -406,8 +406,9 @@ fn de_boor(ctrl: &[Pt], weights: &[f64], knots: &[f64], p: usize, t: f64) -> Pt 
             } else {
                 0.0
             };
-            for c in 0..3 {
-                d[j][c] = (1.0 - alpha) * d[j - 1][c] + alpha * d[j][c];
+            let previous = d[j - 1];
+            for (value, before) in d[j].iter_mut().zip(previous) {
+                *value = (1.0 - alpha) * before + alpha * *value;
             }
         }
     }

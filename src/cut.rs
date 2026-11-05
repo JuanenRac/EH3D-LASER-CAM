@@ -157,8 +157,8 @@ fn sub_path(pts: &[Pt], cum: &[f64], t0: f64, t1: f64) -> Vec<Pt> {
     let (a, ka) = at_length(pts, cum, t0);
     let (b, kb) = at_length(pts, cum, t1);
     let mut v = vec![a];
-    for k in (ka + 1)..=kb {
-        v.push(pts[k]);
+    if ka < kb {
+        v.extend_from_slice(&pts[ka + 1..=kb]);
     }
     v.push(b);
     v.dedup_by(|p, q| dist(*p, *q) <= 1e-9);
@@ -275,7 +275,9 @@ pub fn hatch_lines(
         let y = y_of(k);
         let back = |x: f64| (x * cos - y * sin, x * sin + y * cos);
         let runs: Vec<(Pt, Pt)> = xs
-            .chunks_exact(2)
+            .as_chunks::<2>()
+            .0
+            .iter()
             .filter(|c| c[1] - c[0] > 1e-9)
             .map(|c| (back(c[0]), back(c[1])))
             .collect();
