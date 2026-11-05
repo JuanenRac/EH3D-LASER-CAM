@@ -3,7 +3,8 @@
 
 use crate::browse::{self, Browser};
 use crate::lang::{fill, Lang, Msg};
-use crate::window::{fire, Job, Key, Kind, Mode, Section, Window, MAX_SEGMENTS};
+use crate::vconfig::{KerfSide, LayerMode};
+use crate::window::{fire, Job, Key, Kind, LayerField, Mode, Section, Window, MAX_SEGMENTS};
 use eframe::egui::{
     self, Color32, FontData, FontDefinitions, FontFamily, Pos2, Rect, Stroke, Vec2,
 };
@@ -22,6 +23,8 @@ const DANGER: Color32 = Color32::from_rgb(0xff, 0x54, 0x70);
 /// The head moving with the laser off, and the edge of the work.
 const TRAVEL: Color32 = Color32::from_rgb(0x4a, 0x55, 0x66);
 const EDGE: Color32 = Color32::from_rgb(0x4d, 0xd0, 0xe1);
+/// A line that is cut or engraved in a drawing (one colour: the power of a drawing is set by layer).
+const CUT: Color32 = Color32::from_rgb(0xff, 0x6a, 0x3d);
 
 enum Outcome {
     Cancel,
@@ -48,9 +51,10 @@ struct App {
 impl App {
     fn new(lang: Lang, initial: Option<PathBuf>) -> App {
         let mut win = Window::new(lang);
+        win.load_default_config();
         let mut fit_pending = false;
         if let Some(p) = initial {
-            if win.open_image(&p) {
+            if win.open_dropped(&p) {
                 win.compute();
                 fit_pending = true;
             }
@@ -96,6 +100,9 @@ impl App {
                 if ui.button(Msg::OpenImage.tr(lang)).clicked() {
                     self.ask(Job::OpenImage);
                 }
+                if ui.button(Msg::OpenSettings.tr(lang)).clicked() {
+                    self.ask(Job::OpenConfig);
+                }
                 let can = self.win.can_compute();
                 if ui
                     .add_enabled(can, egui::Button::new(Msg::Compute.tr(lang)))
@@ -138,13 +145,16 @@ impl App {
                     ui.add_space(4.0);
                     self.picture_group(ui);
                     self.mode_group(ui);
-                    if self.win.mode == Mode::Engrave {
-                        self.dots_group(ui);
-                        self.laser_group(ui);
-                    } else {
-                        self.calibration_group(ui);
+                    match self.win.mode {
+                        Mode::Engrave => {
+                            self.dots_group(ui);
+                            self.laser_group(ui);
+                        }
+                        Mode::Calibrate => self.calibration_group(ui),
+                        Mode::Cut => self.vector_group(ui),
                     }
                     self.layers_group(ui);
+                    self.notes_group(ui);
                 });
             });
     }
@@ -179,6 +189,20 @@ impl App {
         }
     }
 
+    /// One setting by its key, with its name above a box to type in.
+    fn field_for(&mut self, ui: &mut egui::Ui, key: Key) {
+        let lang = self.win.lang;
+        if let Some(i) = self.win.fields.iter().position(|f| f.key == key) {
+            let label = self.win.fields[i].label.tr(lang);
+            let mut text = self.win.fields[i].text.clone();
+            ui.label(label);
+            let edit = egui::TextEdit::singleline(&mut text).desired_width(f32::INFINITY);
+            if ui.add(edit).changed() {
+                self.win.set_field(i, text);
+            }
+        }
+    }
+
     fn picture_group(&mut self, ui: &mut egui::Ui) {
         let lang = self.win.lang;
         egui::CollapsingHeader::new(self.heading(Msg::SectionFile))
@@ -189,14 +213,14 @@ impl App {
                 }
                 let shown = self
                     .win
-                    .picture_name()
+                    .current_name()
                     .unwrap_or_else(|| Msg::NoFile.tr(lang).to_string());
                 ui.label(egui::RichText::new(shown).color(DIM));
                 if let Some(info) = self.win.info_line() {
                     ui.label(info);
                 }
                 ui.label(
-                    egui::RichText::new(Msg::NoVectors.tr(lang))
+                    egui::RichText::new(Msg::Formats.tr(lang))
                         .color(DIM)
                         .small(),
                 );
@@ -212,6 +236,7 @@ impl App {
                 let shown = match mode {
                     Mode::Engrave => Msg::ModeEngrave,
                     Mode::Calibrate => Msg::ModeCalibrate,
+                    Mode::Cut => Msg::ModeCut,
                 };
                 egui::ComboBox::from_id_salt("mode")
                     .selected_text(shown.tr(lang))
@@ -222,6 +247,7 @@ impl App {
                             Mode::Calibrate,
                             Msg::ModeCalibrate.tr(lang),
                         );
+                        ui.selectable_value(&mut mode, Mode::Cut, Msg::ModeCut.tr(lang));
                     });
                 if mode != self.win.mode {
                     self.win.set_mode(mode);
@@ -269,17 +295,150 @@ impl App {
             .show(ui, |ui| {
                 self.fields_of(ui, Section::Calibration);
                 // the full power value is the same setting as the one of the laser
-                let i = self.win.fields.iter().position(|f| f.key == Key::SMax);
-                if let Some(i) = i {
-                    let label = self.win.fields[i].label.tr(self.win.lang);
-                    let mut text = self.win.fields[i].text.clone();
-                    ui.label(label);
-                    let edit = egui::TextEdit::singleline(&mut text).desired_width(f32::INFINITY);
-                    if ui.add(edit).changed() {
-                        self.win.set_field(i, text);
-                    }
+                self.field_for(ui, Key::SMax);
+            });
+    }
+
+    /// The settings that are not of one layer: how the file is read and the machine.
+    fn vector_group(&mut self, ui: &mut egui::Ui) {
+        egui::CollapsingHeader::new(self.heading(Msg::SectionVector))
+            .default_open(true)
+            .show(ui, |ui| {
+                self.fields_of(ui, Section::Vector);
+                for key in [Key::SMax, Key::Overscan, Key::OriginX, Key::OriginY] {
+                    self.field_for(ui, key);
                 }
             });
+    }
+
+    fn notes_group(&mut self, ui: &mut egui::Ui) {
+        if self.win.warnings.is_empty() {
+            return;
+        }
+        egui::CollapsingHeader::new(self.heading(Msg::SectionNotes))
+            .default_open(true)
+            .show(ui, |ui| {
+                for note in self.win.warnings.iter().take(20) {
+                    ui.label(egui::RichText::new(note.as_str()).color(DIM).small());
+                }
+            });
+    }
+
+    /// The table of layers (or colours) of the drawing: what is done with each and with which settings.
+    fn layers_panel(&mut self, ui: &mut egui::Ui) {
+        if self.win.mode != Mode::Cut || self.win.rows.is_empty() {
+            return;
+        }
+        let lang = self.win.lang;
+        egui::Panel::bottom("layers")
+            .resizable(true)
+            .default_size(150.0)
+            .show(ui, |ui| {
+                ui.label(self.heading(Msg::SectionLayers));
+                egui::ScrollArea::both()
+                    .auto_shrink([false, true])
+                    .show(ui, |ui| {
+                        egui::Grid::new("layers_grid")
+                            .striped(true)
+                            .spacing([8.0, 4.0])
+                            .show(ui, |ui| {
+                                let heads = [
+                                    Msg::LayerName,
+                                    Msg::LayerModeHead,
+                                    Msg::LayerPower,
+                                    Msg::LayerSpeed,
+                                    Msg::Passes,
+                                    Msg::FocusStep,
+                                    Msg::Kerf,
+                                    Msg::KerfSide,
+                                    Msg::Tabs,
+                                    Msg::TabWidth,
+                                    Msg::HatchAngle,
+                                    Msg::HatchSpacing,
+                                ];
+                                for h in heads {
+                                    ui.label(
+                                        egui::RichText::new(h.tr(lang)).strong().color(ACCENT),
+                                    );
+                                }
+                                ui.end_row();
+                                for r in 0..self.win.rows.len() {
+                                    self.layer_row(ui, r);
+                                    ui.end_row();
+                                }
+                            });
+                    });
+            });
+    }
+
+    /// The cells of one row of the table of layers.
+    fn layer_row(&mut self, ui: &mut egui::Ui, r: usize) {
+        let lang = self.win.lang;
+        let key = self.win.rows[r].key.clone();
+        let shapes = self.win.rows[r].shapes;
+        ui.horizontal(|ui| {
+            if let Some(color) = color_of_key(&key) {
+                let (rect, _) = ui.allocate_exact_size(Vec2::splat(12.0), egui::Sense::hover());
+                ui.painter().rect_filled(rect, 2.0, color);
+            }
+            ui.label(format!("{key} ({shapes})"));
+        });
+        let mut mode = self.win.rows[r].mode;
+        egui::ComboBox::from_id_salt(("layer-mode", r))
+            .width(80.0)
+            .selected_text(mode_word(mode).tr(lang))
+            .show_ui(ui, |ui| {
+                for m in [LayerMode::Cut, LayerMode::Engrave, LayerMode::Skip] {
+                    ui.selectable_value(&mut mode, m, mode_word(m).tr(lang));
+                }
+            });
+        if mode != self.win.rows[r].mode {
+            self.win.set_layer_mode(r, mode);
+        }
+        for f in [
+            LayerField::Power,
+            LayerField::Speed,
+            LayerField::Passes,
+            LayerField::Focus,
+            LayerField::Kerf,
+        ] {
+            self.layer_box(ui, r, f);
+        }
+        let mut side = self.win.rows[r].kerf_side;
+        egui::ComboBox::from_id_salt(("layer-side", r))
+            .width(80.0)
+            .selected_text(side_word(side).tr(lang))
+            .show_ui(ui, |ui| {
+                for k in [
+                    KerfSide::None,
+                    KerfSide::Auto,
+                    KerfSide::Inside,
+                    KerfSide::Outside,
+                ] {
+                    ui.selectable_value(&mut side, k, side_word(k).tr(lang));
+                }
+            });
+        if side != self.win.rows[r].kerf_side {
+            self.win.set_kerf_side(r, side);
+        }
+        for f in [
+            LayerField::Tabs,
+            LayerField::TabWidth,
+            LayerField::HatchAngle,
+            LayerField::HatchSpacing,
+        ] {
+            self.layer_box(ui, r, f);
+        }
+    }
+
+    fn layer_box(&mut self, ui: &mut egui::Ui, r: usize, f: LayerField) {
+        let mut text = self.win.rows[r].fields[f as usize].clone();
+        if ui
+            .add(egui::TextEdit::singleline(&mut text).desired_width(56.0))
+            .changed()
+        {
+            self.win.set_layer_field(r, f, text);
+        }
     }
 
     fn layers_group(&mut self, ui: &mut egui::Ui) {
@@ -377,6 +536,7 @@ impl App {
         }
         let line_mm = self.win.done.as_ref().map_or(0.1, |d| d.line_mm);
         let burn_width = ((line_mm * vp.px_per_mm) as f32).max(1.2);
+        let drawing = self.win.mode == Mode::Cut;
         if self.win.show_travel {
             for s in self.win.segs.iter().filter(|s| !s.burn) {
                 painter.line_segment([at(s.x0, s.y0), at(s.x1, s.y1)], Stroke::new(0.8, TRAVEL));
@@ -384,9 +544,15 @@ impl App {
         }
         for s in self.win.segs.iter().filter(|s| s.burn) {
             let [r, g, b] = fire(s.level);
+            // a drawing is cut in one colour: its power is set by layer, not by the line
+            let color = if drawing {
+                CUT
+            } else {
+                Color32::from_rgb(r, g, b)
+            };
             painter.line_segment(
                 [at(s.x0, s.y0), at(s.x1, s.y1)],
-                Stroke::new(burn_width, Color32::from_rgb(r, g, b)),
+                Stroke::new(burn_width, color),
             );
         }
         self.paint_key(&painter, rect);
@@ -399,6 +565,21 @@ impl App {
         }
         let lang = self.win.lang;
         let mut y = rect.min.y + 12.0;
+        if self.win.mode == Mode::Cut {
+            painter.rect_filled(
+                Rect::from_min_size(Pos2::new(rect.min.x + 12.0, y), Vec2::new(24.0, 6.0)),
+                0.0,
+                CUT,
+            );
+            painter.text(
+                Pos2::new(rect.min.x + 44.0, y + 3.0),
+                egui::Align2::LEFT_CENTER,
+                Msg::LegendCut.tr(lang),
+                egui::FontId::proportional(13.0),
+                TEXT,
+            );
+            return;
+        }
         painter.text(
             Pos2::new(rect.min.x + 12.0, y + 7.0),
             egui::Align2::LEFT_CENTER,
@@ -445,10 +626,18 @@ impl App {
             Some(Outcome::Cancel) => {}
             Some(Outcome::Pick(path)) => {
                 if self.win.run_job(dialog.job, &path) {
-                    if dialog.job == Job::OpenImage {
-                        // the engraving of the new picture is worked out at once
-                        self.win.compute();
-                        self.fit_pending = true;
+                    match dialog.job {
+                        Job::OpenImage => {
+                            // the work of the new file is worked out at once
+                            self.win.compute();
+                            self.fit_pending = true;
+                        }
+                        Job::OpenConfig => {
+                            if self.win.vector.is_some() {
+                                self.win.compute();
+                            }
+                        }
+                        Job::ExportGcode => {}
                     }
                 } else {
                     // the window stays open so that another file or name can be tried
@@ -457,6 +646,35 @@ impl App {
             }
         }
     }
+}
+
+/// The word of the table for what is done with a layer.
+fn mode_word(m: LayerMode) -> Msg {
+    match m {
+        LayerMode::Cut => Msg::WordCut,
+        LayerMode::Engrave => Msg::WordEngrave,
+        LayerMode::Skip => Msg::WordSkip,
+    }
+}
+
+/// The word of the table for the side of the line the beam goes.
+fn side_word(k: KerfSide) -> Msg {
+    match k {
+        KerfSide::None => Msg::WordNone,
+        KerfSide::Auto => Msg::WordAuto,
+        KerfSide::Inside => Msg::WordInside,
+        KerfSide::Outside => Msg::WordOutside,
+    }
+}
+
+/// The colour a layer named `#rrggbb` is drawn with, for the little square of the table.
+fn color_of_key(key: &str) -> Option<Color32> {
+    let hex = key.strip_prefix('#')?;
+    if hex.len() != 6 || !hex.bytes().all(|b| b.is_ascii_hexdigit()) {
+        return None;
+    }
+    let v = u32::from_str_radix(hex, 16).ok()?;
+    Some(Color32::from_rgb((v >> 16) as u8, (v >> 8) as u8, v as u8))
 }
 
 /// Draws the window that opens a file (or asks for the name of the file to write) and says what the person chose.
@@ -558,6 +776,7 @@ impl eframe::App for App {
         }
         self.top_bar(ui);
         self.status_bar(ui);
+        self.layers_panel(ui);
         self.side_panel(ui);
         self.canvas(ui);
         self.dialog_window(&ctx);

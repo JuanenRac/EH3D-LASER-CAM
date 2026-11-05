@@ -3,11 +3,16 @@
 //! The engraving is made with the same functions as the command line (`dither`, `engrave`, `grid`) and written with the same header.
 
 use crate::calibrate::{grid, Grid};
+use crate::cut::{layers as layer_list, plan as plan_cut};
 use crate::dither::{dither, Method};
+use crate::dxf::read_dxf;
 use crate::gcode_out::{header, sha256_hex, Header};
 use crate::image::{from_bytes, Gray};
 use crate::lang::{fill, Lang, Msg};
 use crate::raster::{engrave, overscan_for, Params};
+use crate::svg::read_svg;
+use crate::vconfig::{self, KerfSide, LayerMode, LayerParams, Settings};
+use crate::vector::{Drawing, ReadOptions};
 use crate::viewport::Viewport;
 use std::path::{Path, PathBuf};
 
@@ -20,7 +25,10 @@ pub const MAX_SEGMENTS: usize = 300_000;
 /// What a file chosen in the window is for.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Job {
+    /// A picture (PNG, PGM) or a drawing (SVG, DXF).
     OpenImage,
+    /// A settings file for the vector work.
+    OpenConfig,
     ExportGcode,
 }
 
@@ -32,7 +40,8 @@ impl Job {
     /// The extensions the list of files shows.
     pub fn extensions(self) -> &'static [&'static str] {
         match self {
-            Job::OpenImage => &["png", "pgm"],
+            Job::OpenImage => &["png", "pgm", "svg", "dxf"],
+            Job::OpenConfig => &["cfg"],
             Job::ExportGcode => &["nc", "ngc", "gcode", "gc", "tap", "txt"],
         }
     }
@@ -40,16 +49,18 @@ impl Job {
     pub fn title(self) -> Msg {
         match self {
             Job::OpenImage => Msg::TitleOpenImage,
+            Job::OpenConfig => Msg::TitleOpenSettings,
             Job::ExportGcode => Msg::TitleExport,
         }
     }
 }
 
-/// What the program makes: the engraving of a picture or the grid that finds the power and the feed that suit a material.
+/// What the program makes: the engraving of a picture, the grid that finds the power and the feed that suit a material, or the cutting and engraving of a vector drawing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {
     Engrave,
     Calibrate,
+    Cut,
 }
 
 /// How a grey picture becomes dots.
@@ -87,6 +98,8 @@ pub enum Key {
     OriginY,
     Powers,
     Feeds,
+    Dpi,
+    Tolerance,
 }
 
 /// The group of the side panel a setting belongs to.
@@ -95,6 +108,7 @@ pub enum Section {
     Image,
     Laser,
     Calibration,
+    Vector,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -135,7 +149,85 @@ fn default_fields() -> Vec<Field> {
             Section::Calibration,
             "1000,2000,3000",
         ),
+        f(Key::Dpi, Msg::Dpi, Section::Vector, "96"),
+        f(Key::Tolerance, Msg::Tolerance, Section::Vector, "0.01"),
     ]
+}
+
+/// A setting of a layer that is typed in a box of the table.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LayerField {
+    Power,
+    Speed,
+    Passes,
+    Focus,
+    Kerf,
+    Tabs,
+    TabWidth,
+    HatchAngle,
+    HatchSpacing,
+}
+
+impl LayerField {
+    pub const ALL: [LayerField; 9] = [
+        LayerField::Power,
+        LayerField::Speed,
+        LayerField::Passes,
+        LayerField::Focus,
+        LayerField::Kerf,
+        LayerField::Tabs,
+        LayerField::TabWidth,
+        LayerField::HatchAngle,
+        LayerField::HatchSpacing,
+    ];
+
+    pub fn label(self) -> Msg {
+        match self {
+            LayerField::Power => Msg::LayerPower,
+            LayerField::Speed => Msg::LayerSpeed,
+            LayerField::Passes => Msg::Passes,
+            LayerField::Focus => Msg::FocusStep,
+            LayerField::Kerf => Msg::Kerf,
+            LayerField::Tabs => Msg::Tabs,
+            LayerField::TabWidth => Msg::TabWidth,
+            LayerField::HatchAngle => Msg::HatchAngle,
+            LayerField::HatchSpacing => Msg::HatchSpacing,
+        }
+    }
+}
+
+/// A row of the table of layers: a layer or a colour of the drawing with what is done with it.
+#[derive(Debug, Clone, PartialEq)]
+pub struct LayerRow {
+    pub key: String,
+    pub shapes: usize,
+    pub mode: LayerMode,
+    pub kerf_side: KerfSide,
+    /// The text of each box, in the order of [`LayerField::ALL`].
+    pub fields: [String; 9],
+}
+
+impl LayerRow {
+    fn new(key: &str, shapes: usize, p: &LayerParams) -> LayerRow {
+        let t = |v: f64| format!("{v}");
+        LayerRow {
+            key: key.to_string(),
+            shapes,
+            mode: p.mode,
+            kerf_side: p.kerf_side,
+            fields: [
+                t(p.power_percent),
+                t(p.speed_mm_min),
+                p.passes.to_string(),
+                t(p.focus_step_mm),
+                t(p.kerf_mm),
+                p.tabs.to_string(),
+                t(p.tab_width_mm),
+                t(p.hatch_angle_deg),
+                t(p.hatch_spacing_mm),
+            ],
+        }
+    }
 }
 
 /// A straight pass of the head, seen from above.
@@ -154,6 +246,11 @@ pub struct Seg {
 /// The passes of a G-code program of the laser, read from its text (the same text that is written), and whether the list was cut short at [`MAX_SEGMENTS`]. A move with `G1` is a
 /// pass; it burns when the spindle value `S` is more than 0. `smax` is the value that is full power.
 pub fn passes(gcode: &str, smax: u32) -> (Vec<Seg>, bool) {
+    passes_of(gcode, smax, false)
+}
+
+/// The same, and with `rapid` also the moves with `G0` (the travel between the contours of a drawing) as passes with the laser off.
+pub fn passes_of(gcode: &str, smax: u32, rapid: bool) -> (Vec<Seg>, bool) {
     let mut segs = Vec::new();
     let (mut x, mut y, mut s) = (0.0_f64, 0.0_f64, 0.0_f64);
     let mut line_mode = false;
@@ -190,7 +287,7 @@ pub fn passes(gcode: &str, smax: u32) -> (Vec<Seg>, bool) {
                 _ => {}
             }
         }
-        if moved && line_mode && (nx - x).hypot(ny - y) > 0.0 {
+        if moved && (line_mode || rapid) && (nx - x).hypot(ny - y) > 0.0 {
             if segs.len() >= MAX_SEGMENTS {
                 return (segs, true);
             }
@@ -199,7 +296,7 @@ pub fn passes(gcode: &str, smax: u32) -> (Vec<Seg>, bool) {
                 y0: y,
                 x1: nx,
                 y1: ny,
-                burn: s > 0.0,
+                burn: line_mode && s > 0.0,
                 level: (s / f64::from(smax.max(1))).clamp(0.0, 1.0),
             });
         }
@@ -242,7 +339,7 @@ fn read_file(path: &Path) -> Result<Vec<u8>, String> {
 }
 
 /// Written beside and renamed, so that a file is never left half written.
-fn write_atomic(path: &Path, text: &str) -> Result<(), String> {
+pub fn write_atomic(path: &Path, text: &str) -> Result<(), String> {
     let tmp = PathBuf::from(format!("{}.tmp", path.display()));
     std::fs::write(&tmp, text)
         .and_then(|()| std::fs::rename(&tmp, path))
@@ -253,10 +350,38 @@ fn write_atomic(path: &Path, text: &str) -> Result<(), String> {
 }
 
 /// True when two paths name the same file (compared once resolved; by their text when one does not exist yet).
-fn same_file(a: &Path, b: &Path) -> bool {
+pub fn same_file(a: &Path, b: &Path) -> bool {
     match (a.canonicalize(), b.canonicalize()) {
         (Ok(x), Ok(y)) => x == y,
         _ => a == b,
+    }
+}
+
+/// The extension of a file in lower case ("" when it has none).
+fn extension_of(path: &Path) -> String {
+    path.extension()
+        .map(|e| e.to_string_lossy().to_lowercase())
+        .unwrap_or_default()
+}
+
+/// The bytes of a file, if it is not larger than `max` bytes.
+fn read_file_up_to(path: &Path, max: u64) -> Result<Vec<u8>, String> {
+    let shown = path.display();
+    let meta = std::fs::metadata(path).map_err(|e| format!("{shown}: {e}"))?;
+    if meta.len() > max {
+        return Err(format!(
+            "{shown}: the file is larger than {max} bytes (max_file_bytes)"
+        ));
+    }
+    std::fs::read(path).map_err(|e| format!("{shown}: {e}"))
+}
+
+/// Reads a drawing according to the extension of its file.
+fn parse_drawing(bytes: &[u8], ext: &str, opts: &ReadOptions) -> Result<Drawing, String> {
+    match ext {
+        "svg" => read_svg(bytes, opts),
+        "dxf" => read_dxf(bytes, opts),
+        _ => Err("not a drawing this program reads (SVG, DXF)".to_string()),
     }
 }
 
@@ -276,6 +401,17 @@ pub struct Picture {
     pub gray: Gray,
 }
 
+/// The drawing that is open: the file as it was read (its bytes, for the hash of the header and to read it again when the dpi or the tolerance changes) and what it holds.
+#[derive(Debug, Clone)]
+pub struct VectorFile {
+    pub path: PathBuf,
+    pub name: String,
+    /// `svg` or `dxf`.
+    pub ext: String,
+    pub bytes: Vec<u8>,
+    pub drawing: Drawing,
+}
+
 /// What was worked out, for the status line.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Summary {
@@ -292,6 +428,14 @@ pub enum Summary {
     Calibrated {
         squares: usize,
     },
+    Cut {
+        layers: usize,
+        paths: usize,
+        cut_mm: f64,
+        engrave_mm: f64,
+        travel_mm: f64,
+        seconds: f64,
+    },
 }
 
 /// The G-code that was worked out and what goes in its header.
@@ -305,16 +449,29 @@ pub struct Done {
     /// The width of a line of burning, for the picture.
     pub line_mm: f64,
     pub summary: Summary,
+    /// What was skipped or could not be done, for the list of notes.
+    pub notes: Vec<String>,
 }
 
 /// What the status line says.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Status {
     Ready,
-    ImageOpened { name: String, w: usize, h: usize },
+    ImageOpened {
+        name: String,
+        w: usize,
+        h: usize,
+    },
+    VectorOpened {
+        name: String,
+        shapes: usize,
+        layers: usize,
+    },
+    ConfigLoaded(String),
     Done(Summary),
     Written(String),
     NeedImage,
+    NeedVector,
     BadValue(Msg),
     SameFile(String),
     Failed(String),
@@ -324,7 +481,11 @@ impl Status {
     pub fn is_problem(&self) -> bool {
         matches!(
             self,
-            Status::NeedImage | Status::BadValue(_) | Status::SameFile(_) | Status::Failed(_)
+            Status::NeedImage
+                | Status::NeedVector
+                | Status::BadValue(_)
+                | Status::SameFile(_)
+                | Status::Failed(_)
         )
     }
 
@@ -357,11 +518,39 @@ impl Status {
                     &format!("{seconds:.0}"),
                 ],
             ),
+            Status::VectorOpened {
+                name,
+                shapes,
+                layers,
+            } => fill(
+                Msg::VectorOpened.tr(lang),
+                &[name, &shapes.to_string(), &layers.to_string()],
+            ),
+            Status::ConfigLoaded(name) => fill(Msg::ConfigLoaded.tr(lang), &[name]),
             Status::Done(Summary::Calibrated { squares }) => {
                 fill(Msg::Calibrated.tr(lang), &[&squares.to_string()])
             }
+            Status::Done(Summary::Cut {
+                layers,
+                paths,
+                cut_mm,
+                engrave_mm,
+                travel_mm,
+                seconds,
+            }) => fill(
+                Msg::Cutting.tr(lang),
+                &[
+                    &layers.to_string(),
+                    &paths.to_string(),
+                    &format!("{cut_mm:.0}"),
+                    &format!("{engrave_mm:.0}"),
+                    &format!("{travel_mm:.0}"),
+                    &format!("{seconds:.0}"),
+                ],
+            ),
             Status::Written(name) => fill(Msg::Written.tr(lang), &[name]),
             Status::NeedImage => Msg::NeedImage.tr(lang).to_string(),
+            Status::NeedVector => Msg::NeedVector.tr(lang).to_string(),
             Status::BadValue(label) => fill(Msg::BadValue.tr(lang), &[label.tr(lang)]),
             Status::SameFile(name) => fill(Msg::SameFile.tr(lang), &[name]),
             Status::Failed(e) => fill(Msg::Failed.tr(lang), &[e]),
@@ -379,6 +568,14 @@ pub struct Window {
     /// The overscan is worked out from the feed and the acceleration instead of being typed.
     pub overscan_auto: bool,
     pub picture: Option<Picture>,
+    /// The drawing that is open and the table of its layers.
+    pub vector: Option<VectorFile>,
+    pub rows: Vec<LayerRow>,
+    /// The settings read from a file (the limits, the machine, the defaults of a layer...), under what is typed in the window.
+    pub settings: Settings,
+    pub config_path: Option<PathBuf>,
+    /// What was skipped when the drawing was read and planned.
+    pub warnings: Vec<String>,
     pub done: Option<Done>,
     pub segs: Vec<Seg>,
     /// The picture of the passes was cut short at [`MAX_SEGMENTS`].
@@ -399,6 +596,11 @@ impl Window {
             kind: Kind::FloydSteinberg,
             overscan_auto: false,
             picture: None,
+            vector: None,
+            rows: Vec::new(),
+            settings: Settings::default(),
+            config_path: None,
+            warnings: Vec::new(),
             done: None,
             segs: Vec::new(),
             truncated: false,
@@ -410,12 +612,16 @@ impl Window {
     }
 
     pub fn has_work(&self) -> bool {
-        self.picture.is_some() || self.done.is_some()
+        self.picture.is_some() || self.vector.is_some() || self.done.is_some()
     }
 
     /// Whether the G-code can be worked out now.
     pub fn can_compute(&self) -> bool {
-        self.mode == Mode::Calibrate || self.picture.is_some()
+        match self.mode {
+            Mode::Calibrate => true,
+            Mode::Engrave => self.picture.is_some(),
+            Mode::Cut => self.vector.is_some(),
+        }
     }
 
     fn mark_stale(&mut self) {
@@ -533,11 +739,21 @@ impl Window {
         self.picture.as_ref().map(|p| p.name.clone())
     }
 
-    /// The folder of the picture that is open, where the window of files starts.
+    /// The name of the file the work is made from: the drawing when the program is cutting, the picture otherwise.
+    pub fn current_name(&self) -> Option<String> {
+        match self.mode {
+            Mode::Cut => self.vector.as_ref().map(|v| v.name.clone()),
+            _ => self.picture_name(),
+        }
+    }
+
+    /// The folder of the file that is open, where the window of files starts.
     pub fn work_folder(&self) -> Option<PathBuf> {
-        self.picture
-            .as_ref()
-            .and_then(|p| p.path.parent().map(Path::to_path_buf))
+        let path = match self.mode {
+            Mode::Cut => self.vector.as_ref().map(|v| &v.path),
+            _ => self.picture.as_ref().map(|p| &p.path),
+        };
+        path.and_then(|p| p.parent().map(Path::to_path_buf))
             .filter(|p| !p.as_os_str().is_empty())
     }
 
@@ -547,6 +763,11 @@ impl Window {
             return None;
         }
         match (&self.picture, self.mode) {
+            (_, Mode::Cut) if self.vector.is_some() => {
+                let v = self.vector.as_ref()?;
+                let stem = v.path.file_stem()?.to_string_lossy().into_owned();
+                Some(v.path.with_file_name(format!("{stem}.nc")))
+            }
             (Some(p), Mode::Engrave) => {
                 let stem = p.path.file_stem()?.to_string_lossy().into_owned();
                 Some(p.path.with_file_name(format!("{stem}.nc")))
@@ -575,7 +796,9 @@ impl Window {
                     gray,
                 });
                 // what was worked out from the old picture is not valid any more
-                if self.mode == Mode::Engrave {
+                if matches!(self.mode, Mode::Engrave | Mode::Cut) {
+                    self.mode = Mode::Engrave;
+                    self.warnings.clear();
                     self.done = None;
                     self.segs.clear();
                     self.stale = false;
@@ -590,9 +813,198 @@ impl Window {
         }
     }
 
-    /// Opens a file dropped on the window: the only thing that can be opened is a picture.
+    /// Opens a file chosen or dropped on the window: a drawing (SVG, DXF) or a picture (anything else, which the reader of pictures refuses when it is not one).
     pub fn open_dropped(&mut self, path: &Path) -> bool {
-        self.open_image(path)
+        match extension_of(path).as_str() {
+            "svg" | "dxf" => self.open_vector(path),
+            "png" | "pgm" => self.open_image(path),
+            _ => {
+                self.status = Status::Failed(format!(
+                    "{}: not a file this program reads (PNG, PGM, SVG, DXF)",
+                    path.display()
+                ));
+                false
+            }
+        }
+    }
+
+    /// How the drawing is read, from the boxes of the window.
+    fn read_options(&self) -> Result<ReadOptions, Status> {
+        let mut o = self.settings.read;
+        o.dpi = self.number(Key::Dpi)?;
+        o.tolerance_mm = self.number(Key::Tolerance)?;
+        o.validate().map_err(Status::Failed)?;
+        Ok(o)
+    }
+
+    /// The settings of a layer from its row: what the settings file says for it with what is typed in the table over it.
+    fn layer_params(&self, row: &LayerRow) -> Result<LayerParams, Status> {
+        let num = |f: LayerField| {
+            row.fields[f as usize]
+                .trim()
+                .parse::<f64>()
+                .ok()
+                .filter(|v| v.is_finite())
+                .ok_or(Status::BadValue(f.label()))
+        };
+        let whole = |f: LayerField| {
+            let v = num(f)?;
+            if v.fract() == 0.0 && (0.0..=1_000_000.0).contains(&v) {
+                Ok(v as u32)
+            } else {
+                Err(Status::BadValue(f.label()))
+            }
+        };
+        let mut p = self.settings.params_for(&row.key);
+        p.mode = row.mode;
+        p.kerf_side = row.kerf_side;
+        p.power_percent = num(LayerField::Power)?;
+        p.speed_mm_min = num(LayerField::Speed)?;
+        p.passes = whole(LayerField::Passes)?;
+        p.focus_step_mm = num(LayerField::Focus)?;
+        p.kerf_mm = num(LayerField::Kerf)?;
+        p.tabs = whole(LayerField::Tabs)?;
+        p.tab_width_mm = num(LayerField::TabWidth)?;
+        p.hatch_angle_deg = num(LayerField::HatchAngle)?;
+        p.hatch_spacing_mm = num(LayerField::HatchSpacing)?;
+        Ok(p)
+    }
+
+    /// All the settings of the vector work: the file of settings under the boxes of the window and the table of layers.
+    pub fn vector_settings(&self) -> Result<Settings, Status> {
+        let mut s = self.settings.clone();
+        s.read = self.read_options()?;
+        s.machine.s_max = self.whole(Key::SMax, 1.0, 100_000.0)?;
+        s.machine.overscan_mm = self.number(Key::Overscan)?;
+        s.machine.origin = (self.number(Key::OriginX)?, self.number(Key::OriginY)?);
+        s.layers = self
+            .rows
+            .iter()
+            .map(|r| Ok((r.key.clone(), self.layer_params(r)?)))
+            .collect::<Result<_, Status>>()?;
+        s.validate().map_err(Status::Failed)?;
+        Ok(s)
+    }
+
+    /// Opens an SVG or DXF drawing and builds the table of its layers; the program then cuts instead of engraving.
+    pub fn open_vector(&mut self, path: &Path) -> bool {
+        let opened = self.read_options().and_then(|opts| {
+            let ext = extension_of(path);
+            let bytes =
+                read_file_up_to(path, opts.limits.max_file_bytes as u64).map_err(Status::Failed)?;
+            let drawing = parse_drawing(&bytes, &ext, &opts)
+                .map_err(|e| Status::Failed(format!("{}: {e}", path.display())))?;
+            Ok((ext, bytes, drawing))
+        });
+        match opened {
+            Ok((ext, bytes, drawing)) => {
+                self.warnings = drawing.warnings.clone();
+                self.vector = Some(VectorFile {
+                    path: path.to_path_buf(),
+                    name: name_of(path),
+                    ext,
+                    bytes,
+                    drawing,
+                });
+                self.rebuild_rows();
+                self.mode = Mode::Cut;
+                self.done = None;
+                self.segs.clear();
+                self.stale = false;
+                self.truncated = false;
+                let shapes = self.vector.as_ref().map_or(0, |v| v.drawing.shapes.len());
+                self.status = Status::VectorOpened {
+                    name: name_of(path),
+                    shapes,
+                    layers: self.rows.len(),
+                };
+                true
+            }
+            Err(s) => {
+                self.status = s;
+                false
+            }
+        }
+    }
+
+    /// The table of layers of the drawing that is open, with what the settings say for each.
+    fn rebuild_rows(&mut self) {
+        let Some(v) = &self.vector else {
+            self.rows.clear();
+            return;
+        };
+        self.rows = layer_list(&v.drawing, &self.settings)
+            .iter()
+            .map(|l| LayerRow::new(&l.key, l.shapes, &self.settings.params_for(&l.key)))
+            .collect();
+    }
+
+    fn put(&mut self, key: Key, text: String) {
+        if let Some(f) = self.fields.iter_mut().find(|f| f.key == key) {
+            f.text = text;
+        }
+    }
+
+    /// Reads a file of settings: the boxes of the window and the table of layers take what it says.
+    pub fn load_config(&mut self, path: &Path) -> bool {
+        match vconfig::load(path) {
+            Ok(s) => {
+                let t = |v: f64| format!("{v}");
+                self.put(Key::Dpi, t(s.read.dpi));
+                self.put(Key::Tolerance, t(s.read.tolerance_mm));
+                self.put(Key::SMax, s.machine.s_max.to_string());
+                self.put(Key::Overscan, t(s.machine.overscan_mm));
+                self.put(Key::OriginX, t(s.machine.origin.0));
+                self.put(Key::OriginY, t(s.machine.origin.1));
+                self.settings = s;
+                self.config_path = Some(path.to_path_buf());
+                self.rebuild_rows();
+                self.mark_stale();
+                self.status = Status::ConfigLoaded(name_of(path));
+                true
+            }
+            Err(e) => {
+                self.status = Status::Failed(e);
+                false
+            }
+        }
+    }
+
+    /// Reads the settings file that is named by `PHOENIX_LASER_CONFIG`, or `phoenix-laser.cfg` in the folder the program runs in, when there is one.
+    pub fn load_default_config(&mut self) {
+        let path = std::env::var_os("PHOENIX_LASER_CONFIG")
+            .map(PathBuf::from)
+            .or_else(|| Some(PathBuf::from("phoenix-laser.cfg")).filter(|p| p.is_file()));
+        if let Some(p) = path {
+            self.load_config(&p);
+        }
+    }
+
+    pub fn set_layer_field(&mut self, row: usize, field: LayerField, text: String) {
+        if let Some(r) = self.rows.get_mut(row) {
+            if r.fields[field as usize] != text {
+                r.fields[field as usize] = text;
+                self.mark_stale();
+            }
+        }
+    }
+
+    pub fn set_layer_mode(&mut self, row: usize, mode: LayerMode) {
+        if let Some(r) = self.rows.get_mut(row) {
+            if r.mode != mode {
+                r.mode = mode;
+                self.mark_stale();
+            }
+        }
+    }
+
+    pub fn set_kerf_side(&mut self, row: usize, side: KerfSide) {
+        if let Some(r) = self.rows.get_mut(row) {
+            if r.kerf_side != side {
+                r.kerf_side = side;
+                self.mark_stale();
+            }
+        }
     }
 
     /// Works the G-code out for what is chosen (the engraving or the grid), like the command line, and the passes to draw.
@@ -600,10 +1012,12 @@ impl Window {
         let made = match self.mode {
             Mode::Engrave => self.engrave_job(),
             Mode::Calibrate => self.calibrate_job(),
+            Mode::Cut => self.cut_job(),
         };
         match made {
             Ok(done) => {
-                let (segs, cut) = passes(&done.gcode, done.s_max);
+                self.warnings = done.notes.clone();
+                let (segs, cut) = passes_of(&done.gcode, done.s_max, self.mode == Mode::Cut);
                 self.segs = segs;
                 self.truncated = cut;
                 self.status = Status::Done(done.summary);
@@ -648,6 +1062,32 @@ impl Window {
                 burn_mm: e.burn_mm,
                 seconds: e.seconds,
             },
+            notes: Vec::new(),
+        })
+    }
+
+    /// The G-code that cuts and engraves the drawing that is open, with the settings of the boxes and of the table of layers.
+    fn cut_job(&self) -> Result<Done, Status> {
+        let file = self.vector.as_ref().ok_or(Status::NeedVector)?;
+        let opts = self.read_options()?;
+        let drawing = parse_drawing(&file.bytes, &file.ext, &opts).map_err(Status::Failed)?;
+        let settings = self.vector_settings()?;
+        let plan = plan_cut(&drawing, &settings).map_err(Status::Failed)?;
+        Ok(Done {
+            gcode: plan.gcode,
+            source: Some((file.name.clone(), sha256_hex(&file.bytes))),
+            tools: format!("laser, S 0-{}, vector layers", settings.machine.s_max),
+            s_max: settings.machine.s_max,
+            line_mm: 0.1,
+            summary: Summary::Cut {
+                layers: plan.stats.layers,
+                paths: plan.stats.contours,
+                cut_mm: plan.stats.cut_mm,
+                engrave_mm: plan.stats.engrave_mm,
+                travel_mm: plan.stats.travel_mm,
+                seconds: plan.stats.seconds,
+            },
+            notes: plan.warnings,
         })
     }
 
@@ -668,6 +1108,7 @@ impl Window {
             summary: Summary::Calibrated {
                 squares: powers.len() * feeds.len(),
             },
+            notes: Vec::new(),
         })
     }
 
@@ -676,11 +1117,12 @@ impl Window {
         if (self.done.is_none() || self.stale) && !self.compute() {
             return false;
         }
-        if self
-            .picture
-            .as_ref()
-            .is_some_and(|p| same_file(&p.path, path))
-        {
+        let inputs = [
+            self.picture.as_ref().map(|p| &p.path),
+            self.vector.as_ref().map(|v| &v.path),
+            self.config_path.as_ref(),
+        ];
+        if inputs.into_iter().flatten().any(|p| same_file(p, path)) {
             self.status = Status::SameFile(path.display().to_string());
             return false;
         }
@@ -709,7 +1151,8 @@ impl Window {
     /// Does what a chosen file is for.
     pub fn run_job(&mut self, job: Job, path: &Path) -> bool {
         match job {
-            Job::OpenImage => self.open_image(path),
+            Job::OpenImage => self.open_dropped(path),
+            Job::OpenConfig => self.load_config(path),
             Job::ExportGcode => self.export(path),
         }
     }
@@ -754,6 +1197,19 @@ impl Window {
 
     /// The facts about the picture (what the `info` command prints).
     pub fn info_line(&self) -> Option<String> {
+        if self.mode == Mode::Cut {
+            let v = self.vector.as_ref()?;
+            let ((x0, y0), (x1, y1)) = v.drawing.bounds()?;
+            return Some(fill(
+                Msg::InfoVector.tr(self.lang),
+                &[
+                    &v.drawing.shapes.len().to_string(),
+                    &self.rows.len().to_string(),
+                    &format!("{:.1}", x1 - x0),
+                    &format!("{:.1}", y1 - y0),
+                ],
+            ));
+        }
         let g = &self.picture.as_ref()?.gray;
         let mean = g.data.iter().map(|&v| u64::from(v)).sum::<u64>() as f64 / g.data.len() as f64;
         Some(fill(
@@ -1154,11 +1610,374 @@ mod tests {
         assert_eq!(done.text(Lang::Pt), "6 quadrados da grelha");
     }
 
+    /// A square of 20 mm drawn in red and a circle of radius 3 drawn in blue (one user unit is one mm).
+    const DRAWING: &str = r##"<svg xmlns="http://www.w3.org/2000/svg" width="20mm" height="20mm" viewBox="0 0 20 20"><rect x="0" y="0" width="20" height="20" stroke="#ff0000" fill="none"/><circle cx="10" cy="10" r="3" stroke="#0000ff" fill="none"/></svg>"##;
+
+    /// A window with the drawing open.
+    fn drawn(tag: &str) -> (Scratch, Window, PathBuf) {
+        let s = Scratch::new(tag);
+        let p = s.write("part.svg", DRAWING);
+        let mut w = Window::new(Lang::En);
+        assert!(w.open_vector(&p));
+        (s, w, p)
+    }
+
+    fn cut_summary(w: &Window) -> (usize, usize, f64, f64) {
+        match w.done.as_ref().unwrap().summary {
+            Summary::Cut {
+                layers,
+                paths,
+                cut_mm,
+                engrave_mm,
+                ..
+            } => (layers, paths, cut_mm, engrave_mm),
+            other => panic!("{other:?}"),
+        }
+    }
+
+    #[test]
+    fn opening_a_drawing_builds_the_table_of_layers_and_switches_to_cutting() {
+        let (_s, w, _p) = drawn("vec-open");
+        assert_eq!(w.mode, Mode::Cut);
+        assert_eq!(
+            w.status,
+            Status::VectorOpened {
+                name: "part.svg".into(),
+                shapes: 2,
+                layers: 2
+            }
+        );
+        let keys: Vec<&str> = w.rows.iter().map(|r| r.key.as_str()).collect();
+        assert_eq!(keys, vec!["#ff0000", "#0000ff"]);
+        // the defaults of a layer
+        assert_eq!(w.rows[0].mode, LayerMode::Cut);
+        assert_eq!(w.rows[0].fields[LayerField::Power as usize], "50");
+        assert_eq!(w.rows[0].fields[LayerField::Speed as usize], "600");
+        assert_eq!(w.rows[0].fields[LayerField::Passes as usize], "1");
+        assert!(w.can_compute() && w.has_work());
+        assert_eq!(w.current_name().as_deref(), Some("part.svg"));
+        // 2 shapes in 2 layers, 20 x 20 mm
+        assert_eq!(w.info_line().unwrap(), "2 shapes, 2 layers, 20.0 x 20.0 mm");
+    }
+
+    #[test]
+    fn the_drawing_is_cut_with_the_settings_of_its_table() {
+        let (_s, mut w, _p) = drawn("vec-cut");
+        assert!(w.compute());
+        let (layers, paths, cut_mm, engrave_mm) = cut_summary(&w);
+        assert_eq!((layers, paths), (2, 2));
+        assert_eq!(engrave_mm, 0.0);
+        // the square is 80 mm; the circle has a perimeter of 18.85 mm and its flattened form a little less
+        assert!(cut_mm > 98.7 && cut_mm < 98.86, "{cut_mm}");
+        // both layers are cut (the blue one first: same order, lower name), the passes of the picture are there
+        let g = &w.done.as_ref().unwrap().gcode;
+        let first_layer = g.lines().find(|l| l.starts_with("; layer")).unwrap();
+        assert!(
+            first_layer.starts_with("; layer #0000ff: cut, 50 %, 600 mm/min"),
+            "{first_layer}"
+        );
+        assert!(w.segs.iter().any(|s| s.burn) && w.segs.iter().any(|s| !s.burn));
+        assert!(!w.stale);
+        // a layer that is skipped is not cut: only the square is left, 80 mm
+        w.set_layer_mode(1, LayerMode::Skip);
+        assert!(w.stale);
+        assert!(w.compute());
+        assert_eq!(cut_summary(&w), (1, 1, 80.0, 0.0));
+    }
+
+    #[test]
+    fn the_beam_width_of_a_layer_moves_the_cut_outwards() {
+        let (_s, mut w, _p) = drawn("vec-kerf");
+        w.set_layer_mode(1, LayerMode::Skip);
+        w.set_layer_field(0, LayerField::Kerf, "0.2".into());
+        w.set_kerf_side(0, KerfSide::Outside);
+        assert!(w.compute());
+        let ((x0, y0), (x1, y1)) = w.bounds().unwrap();
+        assert!(
+            (x0 + 0.1).abs() < 1e-9 && (y0 + 0.1).abs() < 1e-9,
+            "{x0} {y0}"
+        );
+        assert!(
+            (x1 - 20.1).abs() < 1e-9 && (y1 - 20.1).abs() < 1e-9,
+            "{x1} {y1}"
+        );
+    }
+
+    #[test]
+    fn a_box_of_the_table_that_is_not_valid_says_which() {
+        let (_s, mut w, _p) = drawn("vec-bad");
+        let try_value = |w: &mut Window, f: LayerField, text: &str| {
+            w.set_layer_field(0, f, text.into());
+            let ok = w.compute();
+            let status = w.status.clone();
+            w.set_layer_field(0, f, "1".into());
+            (ok, status)
+        };
+        assert_eq!(
+            try_value(&mut w, LayerField::Power, "0"),
+            (
+                false,
+                Status::Failed("layer #ff0000: power is 0: it must be from 0.001 to 100".into())
+            )
+        );
+        assert_eq!(
+            try_value(&mut w, LayerField::Speed, "abc"),
+            (false, Status::BadValue(Msg::LayerSpeed))
+        );
+        assert_eq!(
+            try_value(&mut w, LayerField::Passes, "1.5"),
+            (false, Status::BadValue(Msg::Passes))
+        );
+        assert_eq!(
+            try_value(&mut w, LayerField::Tabs, "-1"),
+            (false, Status::BadValue(Msg::Tabs))
+        );
+        assert_eq!(
+            try_value(&mut w, LayerField::HatchAngle, "x"),
+            (false, Status::BadValue(Msg::HatchAngle))
+        );
+        // a box of the window that is not a number
+        set(&mut w, Key::Dpi, "abc");
+        assert!(!w.compute());
+        assert_eq!(w.status, Status::BadValue(Msg::Dpi));
+        set(&mut w, Key::Dpi, "96");
+        set(&mut w, Key::SMax, "0");
+        assert!(!w.compute());
+        assert_eq!(w.status, Status::BadValue(Msg::SMax));
+        // all the layers skipped: there is nothing to cut
+        set(&mut w, Key::SMax, "1000");
+        w.set_layer_mode(0, LayerMode::Skip);
+        w.set_layer_mode(1, LayerMode::Skip);
+        assert!(!w.compute());
+        assert!(w.status.is_problem());
+    }
+
+    #[test]
+    fn the_drawing_is_exported_with_the_header_of_the_picture_and_never_over_the_input() {
+        let (s, mut w, p) = drawn("vec-export");
+        let out = s.0.join("part.nc");
+        assert_eq!(w.suggested_output_for(Job::ExportGcode), Some(out.clone()));
+        assert!(w.export(&out));
+        let text = fs::read_to_string(&out).unwrap();
+        assert!(text.starts_with("; generator: phoenix-laser "));
+        assert!(text.contains(&format!(
+            "; source: part.svg sha256:{}\n",
+            sha256_hex(DRAWING.as_bytes())
+        )));
+        assert!(text.ends_with("M5\nM2\n"));
+        crate::cut::verify_gcode(&text, 1000, None).unwrap();
+        // never over the drawing
+        assert!(!w.export(&p));
+        assert!(matches!(w.status, Status::SameFile(_)));
+        assert_eq!(fs::read_to_string(&p).unwrap(), DRAWING);
+        // nor over the settings file that was read
+        let cfg = s.write("a.cfg", "[machine]\ns_max = 1000\n");
+        assert!(w.load_config(&cfg));
+        assert!(!w.export(&cfg));
+        assert!(matches!(w.status, Status::SameFile(_)));
+        assert_eq!(
+            fs::read_to_string(&cfg).unwrap(),
+            "[machine]\ns_max = 1000\n"
+        );
+    }
+
+    #[test]
+    fn a_file_of_settings_fills_the_boxes_and_the_table() {
+        let (s, mut w, _p) = drawn("vec-config");
+        let cfg = s.write(
+            "a.cfg",
+            "[machine]\ns_max = 255\noverscan_mm = 1.5\n[read]\ndpi = 72\n[layer #ff0000]\npower = 80\nmode = engrave\n",
+        );
+        assert!(w.load_config(&cfg));
+        assert_eq!(w.status, Status::ConfigLoaded("a.cfg".into()));
+        let field = |w: &Window, k: Key| w.fields.iter().find(|f| f.key == k).unwrap().text.clone();
+        assert_eq!(field(&w, Key::SMax), "255");
+        assert_eq!(field(&w, Key::Overscan), "1.5");
+        assert_eq!(field(&w, Key::Dpi), "72");
+        assert_eq!(w.rows[0].mode, LayerMode::Engrave);
+        assert_eq!(w.rows[0].fields[LayerField::Power as usize], "80");
+        assert_eq!(w.rows[1].mode, LayerMode::Cut);
+        assert_eq!(w.rows[1].fields[LayerField::Power as usize], "50");
+        // the engraving of the square: lines 0.1 apart across 20 mm are 200 lines of 20 mm; the circle is cut
+        assert!(w.compute());
+        let (layers, _, cut_mm, engrave_mm) = cut_summary(&w);
+        assert_eq!(layers, 2);
+        assert!((engrave_mm - 4000.0).abs() < 1e-6, "{engrave_mm}");
+        assert!(cut_mm > 18.7 && cut_mm < 18.86, "{cut_mm}");
+        // 80 % of 255 is 204 and 50 % is 127.5, which rounds to 128
+        let g = &w.done.as_ref().unwrap().gcode;
+        assert!(g.contains(" S204\n") && g.contains(" S128\n"));
+        assert!(!g.contains("S1000"));
+    }
+
+    #[test]
+    fn a_file_of_settings_with_a_mistake_changes_nothing() {
+        let (s, mut w, _p) = drawn("vec-config-bad");
+        let cfg = s.write("b.cfg", "[machine]\ns_max = 255\n[defaults]\npower = 500\n");
+        assert!(!w.load_config(&cfg));
+        assert!(
+            matches!(&w.status, Status::Failed(e) if e.contains("power") && e.contains("b.cfg"))
+        );
+        let smax = w
+            .fields
+            .iter()
+            .find(|f| f.key == Key::SMax)
+            .unwrap()
+            .text
+            .clone();
+        assert_eq!(smax, "1000");
+        assert!(w.config_path.is_none());
+        assert!(!w.load_config(&s.0.join("missing.cfg")));
+    }
+
+    #[test]
+    fn a_dropped_file_is_opened_by_what_it_is() {
+        let s = Scratch::new("vec-drop");
+        let svg = s.write("part.svg", DRAWING);
+        let pgm = s.write("pic.pgm", PICTURE);
+        let txt = s.write("notes.txt", "hello");
+        let mut w = Window::new(Lang::En);
+        assert!(w.open_dropped(&svg));
+        assert_eq!(w.mode, Mode::Cut);
+        // a file that is not one of the four kinds leaves everything as it is
+        assert!(!w.open_dropped(&txt));
+        assert!(matches!(&w.status, Status::Failed(e) if e.contains("notes.txt")));
+        assert_eq!(w.mode, Mode::Cut);
+        assert_eq!(w.rows.len(), 2);
+        // a picture takes the program back to engraving
+        assert!(w.open_dropped(&pgm));
+        assert_eq!(w.mode, Mode::Engrave);
+        assert!(
+            w.vector.is_some(),
+            "the drawing stays open for when the person comes back to cutting"
+        );
+        assert!(w.can_compute());
+        w.set_mode(Mode::Cut);
+        assert_eq!(w.current_name().as_deref(), Some("part.svg"));
+        // the extension is read in any case
+        let upper = s.write("PART2.SVG", DRAWING);
+        assert!(w.open_dropped(&upper));
+    }
+
+    #[test]
+    fn a_drawing_that_cannot_be_read_is_refused_and_the_one_that_was_open_stays() {
+        let (s, mut w, _p) = drawn("vec-refuse");
+        let bad = s.write("bad.svg", "<svg");
+        assert!(!w.open_vector(&bad));
+        assert!(matches!(&w.status, Status::Failed(e) if e.contains("bad.svg")));
+        assert_eq!(w.rows.len(), 2);
+        assert_eq!(w.current_name().as_deref(), Some("part.svg"));
+        let entity = s.write("entity.svg", r#"<!DOCTYPE svg [<!ENTITY a "b">]><svg/>"#);
+        assert!(!w.open_vector(&entity));
+        assert!(matches!(&w.status, Status::Failed(e) if e.contains("entities")));
+        // larger than the limit of the settings
+        w.settings.read.limits.max_file_bytes = 10;
+        let again = s.write("again.svg", DRAWING);
+        assert!(!w.open_vector(&again));
+        assert!(matches!(&w.status, Status::Failed(e) if e.contains("larger")));
+        assert!(!w.open_vector(&s.0.join("missing.svg")));
+    }
+
+    #[test]
+    fn cutting_needs_a_drawing() {
+        let mut w = Window::new(Lang::En);
+        w.set_mode(Mode::Cut);
+        assert!(!w.can_compute());
+        assert!(!w.compute());
+        assert_eq!(w.status, Status::NeedVector);
+        assert!(w.status.is_problem());
+        assert_eq!(
+            w.suggested_output_for(Job::ExportGcode),
+            Some(PathBuf::from("calibration.nc"))
+        );
+    }
+
+    #[test]
+    fn a_dxf_drawing_is_cut_by_layer() {
+        let s = Scratch::new("vec-dxf");
+        let dxf = "0\nSECTION\n2\nENTITIES\n0\nCIRCLE\n8\nHoles\n10\n10\n20\n10\n40\n2\n0\nLINE\n8\nScore\n10\n0\n20\n0\n11\n20\n21\n0\n0\nENDSEC\n0\nEOF\n";
+        let p = s.write("plate.dxf", dxf);
+        let mut w = Window::new(Lang::En);
+        assert!(w.open_vector(&p));
+        let keys: Vec<&str> = w.rows.iter().map(|r| r.key.as_str()).collect();
+        assert_eq!(keys, vec!["holes", "score"]);
+        w.set_layer_mode(1, LayerMode::Engrave);
+        assert!(w.compute());
+        let (layers, paths, cut_mm, engrave_mm) = cut_summary(&w);
+        assert_eq!((layers, paths), (2, 2));
+        // the line is engraved at its length, the hole is a circle of radius 2
+        assert_eq!(engrave_mm, 20.0);
+        assert!(cut_mm > 12.4 && cut_mm < 12.57, "{cut_mm}");
+        assert_eq!(
+            w.suggested_output_for(Job::ExportGcode),
+            Some(s.0.join("plate.nc"))
+        );
+    }
+
+    #[test]
+    fn the_notes_of_the_reading_are_kept_for_the_window() {
+        let s = Scratch::new("vec-notes");
+        let p = s.write(
+            "n.svg",
+            r##"<svg><text x="0" y="0">hello</text><path d="M0 0 L10 0" stroke="#f00"/></svg>"##,
+        );
+        let mut w = Window::new(Lang::En);
+        assert!(w.open_vector(&p));
+        assert_eq!(w.warnings.len(), 1);
+        assert!(w.compute());
+        assert_eq!(
+            w.warnings.len(),
+            1,
+            "the note of the reading is still there after the plan"
+        );
+        assert!(w.warnings[0].contains("text"));
+    }
+
+    #[test]
+    fn the_status_of_the_vector_work_speaks_every_language() {
+        let opened = Status::VectorOpened {
+            name: "a.svg".into(),
+            shapes: 3,
+            layers: 2,
+        };
+        assert_eq!(opened.text(Lang::En), "a.svg: 3 shapes in 2 layers");
+        assert_eq!(opened.text(Lang::Es), "a.svg: 3 formas en 2 capas");
+        assert_eq!(opened.text(Lang::Pt), "a.svg: 3 formas em 2 camadas");
+        let done = Status::Done(Summary::Cut {
+            layers: 2,
+            paths: 3,
+            cut_mm: 98.8,
+            engrave_mm: 0.0,
+            travel_mm: 12.4,
+            seconds: 9.6,
+        });
+        assert_eq!(
+            done.text(Lang::En),
+            "2 layers, 3 paths, 99 mm cut, 0 mm engraved, 12 mm of travel, about 10 s"
+        );
+        assert_eq!(
+            Status::ConfigLoaded("x.cfg".into()).text(Lang::En),
+            "Settings read from x.cfg"
+        );
+        assert!(Status::NeedVector.text(Lang::De).contains("SVG"));
+        for l in Lang::ALL {
+            assert!(!done.text(l).contains('{'), "{}", l.code());
+            assert!(!opened.text(l).contains('{'), "{}", l.code());
+        }
+    }
+
     #[test]
     fn each_job_lists_the_files_it_can_open() {
         assert!(Job::OpenImage.extensions().contains(&"png"));
         assert!(Job::OpenImage.extensions().contains(&"pgm"));
-        assert!(Job::ExportGcode.is_export() && !Job::OpenImage.is_export());
+        assert!(Job::OpenImage.extensions().contains(&"svg"));
+        assert!(Job::OpenImage.extensions().contains(&"dxf"));
+        assert_eq!(Job::OpenConfig.extensions(), &["cfg"]);
+        assert!(
+            Job::ExportGcode.is_export()
+                && !Job::OpenImage.is_export()
+                && !Job::OpenConfig.is_export()
+        );
         assert_eq!(Kind::ALL.len(), 3);
     }
 }
