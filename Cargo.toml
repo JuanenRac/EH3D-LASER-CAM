@@ -1,6 +1,6 @@
 [package]
 name = "eh3d-phoenix-laser"
-version = "0.0.3"
+version = "0.0.4"
 edition = "2021"
 rust-version = "1.88"
 description = "Laser engraving from an image and cutting from SVG and DXF drawings: dithering, raster G-code with dynamic power and overscan, contours cut by layer with tabs, passes and beam width, and a power-against-feed calibration grid"
