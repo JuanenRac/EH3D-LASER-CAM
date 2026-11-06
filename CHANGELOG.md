@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **A picture mode for the window:** `--shot FILE.png` (built with `--features gui`) opens the window at the size of `--size WxH` (320 to 8192, 1180x760 by default), with `--theme forge|dark|light`, `--lang CODE` and the file of `--open FILE`, waits `--wait N` frames (0 to 3600, 6 by default), saves what it drew as a PNG file and closes by itself. An existing file is never replaced unless `--replace` is given, the window keeps no settings and reads no settings file in this mode, the exit code is 0 when the file was written, 1 when it was not (also when the picture does not come back within 600 frames) and 2 for wrong arguments, and a build without the window says so. The arguments are read by plain code with its tests.
+
 ## [0.0.4] - Vector cutting and engraving from SVG and DXF, the window with a table of layers and the Windows icon
 
 - **Ready-made programs for every system:** the `Release binaries` workflow, started by hand by the owner from main, builds the window version for Windows (64 and 32 bits), Linux and macOS (Apple silicon and Intel), packs each with the licence, the README, the icon and the examples, writes the SHA-256 of every package, `SHA256SUMS` and a build manifest, attests their provenance, checks the result as a stranger would and, only when the dry run is switched off and the owner approves, prepares a draft release; the README has a Downloads section that tells how the signed packages are checked.

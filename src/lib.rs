@@ -18,6 +18,7 @@ pub mod lang;
 pub mod offset;
 pub mod order;
 pub mod raster;
+pub mod shot;
 pub mod svg;
 pub mod vconfig;
 pub mod vector;

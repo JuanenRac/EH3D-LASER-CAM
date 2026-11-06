@@ -32,6 +32,7 @@ const HELP: &str = "phoenix-laser: laser engraving from an image
   phoenix-laser vector DRAWING OUT.nc [the options of cut] [--angle DEG] [--spacing MM]
   phoenix-laser layers DRAWING [--config FILE] [--dpi N]
   phoenix-laser [gui] [FILE]                     the window (a build with --features gui): with no arguments, with a file or with gui it opens; the commands above never open it
+  phoenix-laser gui [FILE] --shot OUT.png [--size WxH] [--theme forge|dark|light] [--wait N] [--lang CODE] [--replace]   a picture of the window (a build with --features gui)
 
 IMAGE is a PNG or a PGM file. --dry-run works the engraving out and counts it but writes nothing (OUT.nc may then be left out). --power is a percent of full power; --smax is the spindle value that is full power for the controller (GRBL: $30).
 The engraving is made of dots of --dot-mm on a side, so the image is scaled to --width-mm / --dot-mm dots wide.
@@ -438,8 +439,44 @@ fn open_window(picture: Option<String>) -> ExitCode {
     }
 }
 
+/// The picture mode: `--shot FILE.png` opens the window, saves what it draws as a PNG file and closes. The exit code is 0 when the file was written, 1 when it was not and 2 when the
+/// arguments are wrong.
+#[cfg(feature = "gui")]
+fn take_picture(args: &[String]) -> ExitCode {
+    let parsed = match eh3d_phoenix_laser::shot::parse_window_args(args, 1) {
+        Ok(parsed) => parsed,
+        Err(e) => {
+            eprintln!("error: {e}");
+            return ExitCode::from(2);
+        }
+    };
+    let Some(request) = parsed.shot else {
+        eprintln!("error: --shot needs a file to write");
+        return ExitCode::from(2);
+    };
+    let lang = parsed
+        .lang
+        .unwrap_or_else(eh3d_phoenix_laser::lang::Lang::from_env);
+    match eh3d_phoenix_laser::gui::run_shot(parsed.files, lang, request) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(e) => {
+            eprintln!("error: the picture could not be taken: {e}");
+            ExitCode::from(1)
+        }
+    }
+}
+
 fn main() -> ExitCode {
     let args: Vec<String> = env::args().skip(1).collect();
+    if eh3d_phoenix_laser::shot::wants_picture(&args) {
+        #[cfg(feature = "gui")]
+        return take_picture(&args);
+        #[cfg(not(feature = "gui"))]
+        {
+            eprintln!("error: this build has no window: build it with --features gui");
+            return ExitCode::from(1);
+        }
+    }
     #[cfg(feature = "gui")]
     if let Some(picture) = window_request(&args) {
         return open_window(picture);

@@ -35,3 +35,15 @@ fn a_single_picture_without_a_command_is_an_unknown_command_in_this_build() {
         .expect("the program runs");
     assert!(!out.status.success());
 }
+
+#[test]
+fn the_shot_option_says_that_this_build_has_no_window() {
+    let out = Command::new(BIN)
+        .args(["--shot", "picture.png"])
+        .output()
+        .expect("the program runs");
+    assert!(!out.status.success());
+    let text = String::from_utf8_lossy(&out.stderr);
+    assert!(text.contains("--features gui"), "{text}");
+    assert!(!std::path::Path::new("picture.png").exists());
+}

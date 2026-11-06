@@ -119,6 +119,19 @@
           }
         },
         {
+          "name": "shot.rs",
+          "desc": {
+            "en": "the picture mode of the window (--shot): its arguments, read and checked without a screen",
+            "es": "el modo de captura de la ventana (--shot): sus argumentos, leídos y comprobados sin pantalla",
+            "de": "der Bildmodus des Fensters (--shot): seine Argumente, ohne Bildschirm gelesen und geprüft",
+            "fr": "le mode capture de la fenêtre (--shot) : ses arguments, lus et vérifiés sans écran",
+            "it": "la modalità immagine della finestra (--shot): i suoi argomenti, letti e verificati senza schermo",
+            "ja": "ウィンドウの画像モード（--shot）：画面なしで読み取り・検証される引数",
+            "zh": "窗口的截图模式（--shot）：无需屏幕即可读取和检查其参数",
+            "pt": "o modo de captura da janela (--shot): os seus argumentos, lidos e verificados sem ecrã"
+          }
+        },
+        {
           "name": "vector.rs",
           "desc": {
             "en": "a drawing once read: shapes in mm, layers, limits and the small geometry",

@@ -188,7 +188,7 @@
     }
   ],
   "legend": {
-    "tested": "covered by tests on a computer (294 tests)",
+    "tested": "covered by tests on a computer (304 tests)",
     "config": "planned, not used today",
     "external": "a person, a file or another repository",
     "untested": "written, not built or looked at on a screen yet"
