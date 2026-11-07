@@ -163,6 +163,8 @@ pub struct Machine {
     pub overscan_mm: f64,
     /// The speed of the moves with the laser off, only to estimate the time.
     pub rapid_mm_min: f64,
+    /// The optical power of the laser at full power, in watts; 0 when it is not known (the energy of a layer is then not worked out).
+    pub laser_watts: f64,
     /// Where the lower left corner of the work goes.
     pub origin: Pt,
     /// Where the focus (Z) is for the first pass.
@@ -179,6 +181,7 @@ impl Default for Machine {
             s_max: 1000,
             overscan_mm: 2.0,
             rapid_mm_min: 6000.0,
+            laser_watts: 0.0,
             origin: (0.0, 0.0),
             focus_z_mm: 0.0,
             bed_mm: None,
@@ -273,6 +276,7 @@ impl Settings {
         }
         range("overscan", m.overscan_mm, 0.0, 50.0)?;
         range("rapid", m.rapid_mm_min, 1.0, 100_000.0)?;
+        range("laser_watts", m.laser_watts, 0.0, 1_000.0)?;
         range("origin x", m.origin.0, -100_000.0, 100_000.0)?;
         range("origin y", m.origin.1, -100_000.0, 100_000.0)?;
         range("focus_z", m.focus_z_mm, -1_000.0, 1_000.0)?;
@@ -407,6 +411,7 @@ fn set_global(s: &mut Settings, section: &str, key: &str, value: &str) -> Result
         }
         ("machine", "overscan_mm") => s.machine.overscan_mm = number(value)?,
         ("machine", "rapid_mm_min") => s.machine.rapid_mm_min = number(value)?,
+        ("machine", "laser_watts") => s.machine.laser_watts = number(value)?,
         ("machine", "origin_x") => s.machine.origin.0 = number(value)?,
         ("machine", "origin_y") => s.machine.origin.1 = number(value)?,
         ("machine", "focus_z_mm") => s.machine.focus_z_mm = number(value)?,
@@ -551,7 +556,7 @@ mod tests {
              [read]\ndpi = 72\ntolerance_mm = 0.02\ngroup_by = layer\nalign = page\n\
              [limits]\nmax_depth = 10\n\
              [order]\ntwo_opt = off\njoin_tolerance_mm = 0.05\n\
-             [machine]\ns_max = 255\noverscan_mm = 3\norigin_x = 5\nbed_x_mm = 300\nbed_y_mm = 200\n\
+             [machine]\ns_max = 255\noverscan_mm = 3\norigin_x = 5\nbed_x_mm = 300\nbed_y_mm = 200\nlaser_watts = 10\n\
              [layer #FF0000]\nmode = cut\npower = 80\nspeed = 300\npasses = 2\nfocus_step = -0.5\nkerf = 0.2\nkerf_side = auto\ntabs = 4\ntab_width = 1.5\n\
              [defaults]\nspeed = 900\npower = 30\n\
              [layer Marks]\nmode = engrave\nhatch_angle = 45\nhatch_spacing = 0.2\n",
@@ -565,6 +570,7 @@ mod tests {
         assert!(!s.two_opt);
         assert_eq!(s.join_tolerance_mm, 0.05);
         assert_eq!(s.machine.s_max, 255);
+        assert_eq!(s.machine.laser_watts, 10.0);
         assert_eq!(s.machine.overscan_mm, 3.0);
         assert_eq!(s.machine.origin, (5.0, 0.0));
         assert_eq!(s.machine.bed_mm, Some((300.0, 200.0)));

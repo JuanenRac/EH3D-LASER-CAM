@@ -10,6 +10,7 @@ pub mod calibrate;
 pub mod cut;
 pub mod dither;
 pub mod dxf;
+pub mod energy;
 pub mod flatten;
 pub mod gcode_out;
 #[cfg(feature = "gui")]

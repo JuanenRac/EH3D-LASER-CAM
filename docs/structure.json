@@ -184,6 +184,19 @@
           }
         },
         {
+          "name": "energy.rs",
+          "desc": {
+            "en": "the energy of a pass for each millimetre or square millimetre, from the optical power",
+            "es": "la energía de una pasada por milímetro o milímetro cuadrado, desde la potencia óptica",
+            "de": "die Energie eines Durchgangs je Millimeter oder Quadratmillimeter aus der optischen Leistung",
+            "fr": "l'énergie d'une passe par millimètre ou millimètre carré, d'après la puissance optique",
+            "it": "l'energia di una passata per millimetro o millimetro quadrato, dalla potenza ottica",
+            "ja": "光出力から求める 1 パスあたりの 1 mm または 1 mm² のエネルギー",
+            "zh": "由光功率算出每毫米或每平方毫米一次走刀的能量",
+            "pt": "a energia de uma passagem por milímetro ou milímetro quadrado, a partir da potência ótica"
+          }
+        },
+        {
           "name": "offset.rs",
           "desc": {
             "en": "moving a contour sideways by the width of the beam, checked edge by edge",

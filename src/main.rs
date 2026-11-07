@@ -9,6 +9,7 @@ use eh3d_phoenix_laser::calibrate::{grid, Grid};
 use eh3d_phoenix_laser::cut::{layers as layer_list, plan};
 use eh3d_phoenix_laser::dither::{dither, Method};
 use eh3d_phoenix_laser::dxf::read_dxf;
+use eh3d_phoenix_laser::energy::describe;
 use eh3d_phoenix_laser::gcode_out::{header, sha256_hex, Header};
 use eh3d_phoenix_laser::image::from_bytes;
 use eh3d_phoenix_laser::raster::{engrave, overscan_for, Params};
@@ -249,7 +250,7 @@ fn layers_job(mut args: Vec<String>) -> Result<(), String> {
     for l in layer_list(&drawing, &settings) {
         let p = settings.params_for(&l.key);
         println!(
-            "{}: {} shapes ({} closed), {:.1} mm, {} at {} % and {} mm/min, {} pass(es)",
+            "{}: {} shapes ({} closed), {:.1} mm, {} at {} % and {} mm/min, {} pass(es){}",
             l.key,
             l.shapes,
             l.closed,
@@ -257,7 +258,8 @@ fn layers_job(mut args: Vec<String>) -> Result<(), String> {
             p.mode.word(),
             p.power_percent,
             p.speed_mm_min,
-            p.passes
+            p.passes,
+            describe(settings.machine.laser_watts, &p)
         );
     }
     for note in &drawing.warnings {

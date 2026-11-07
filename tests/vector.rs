@@ -271,6 +271,37 @@ fn layers_lists_what_the_drawing_holds_and_what_would_be_done_with_it() {
 }
 
 #[test]
+fn layers_tell_the_energy_of_a_pass_only_when_the_power_of_the_laser_is_known() {
+    let s = Scratch::new("energy");
+    let dxf = s.write("sq.dxf", SQUARE_DXF);
+    // 10 W at 50 % over 600 mm/min (10 mm/s) is 0.5 J for each millimetre of the cut
+    let cfg = s.write("w.cfg", "[machine]\nlaser_watts = 10\n");
+    let (c, out, _) = run(&["layers", &dxf, "--config", &cfg]);
+    assert_eq!(c, Some(0));
+    assert_eq!(
+        out,
+        "l: 1 shapes (1 closed), 40.0 mm, cut at 50 % and 600 mm/min, 1 pass(es), 0.500 J/mm a pass\n"
+    );
+    // the same 0.5 J/mm over hatch lines 0.1 mm apart is 5 J for each square millimetre
+    let svg = s.write("plate.svg", PLATE_SVG);
+    let hatch = s.write(
+        "h.cfg",
+        "[machine]\nlaser_watts = 10\n[layer #ff0000]\nmode = engrave\nhatch_spacing = 0.1\n",
+    );
+    let (c, out, _) = run(&["layers", &svg, "--config", &hatch]);
+    assert_eq!(c, Some(0));
+    assert!(
+        out.ends_with(" mm, engrave at 50 % and 600 mm/min, 1 pass(es), 5.000 J/mm2 a pass\n"),
+        "{out}"
+    );
+    // a power that is not a power of a laser is refused with its name
+    let bad = s.write("b.cfg", "[machine]\nlaser_watts = 5000\n");
+    let (c, _, e) = run(&["layers", &dxf, "--config", &bad]);
+    assert_ne!(c, Some(0));
+    assert!(e.contains("laser_watts"), "{e}");
+}
+
+#[test]
 fn a_settings_file_sets_each_layer_and_the_command_line_changes_them_all() {
     let s = Scratch::new("config");
     let input = s.write("sq.dxf", SQUARE_DXF);
@@ -629,7 +660,7 @@ fn every_setting_the_file_reads_is_documented_and_every_documented_setting_is_re
         }
     }
     assert_eq!(layer_keys, 12, "{keys:?}");
-    assert_eq!(keys.len(), 12 + 30, "{keys:?}");
+    assert_eq!(keys.len(), 12 + 31, "{keys:?}");
     for k in &keys {
         assert!(
             doc.contains(&format!("`{k}`")),

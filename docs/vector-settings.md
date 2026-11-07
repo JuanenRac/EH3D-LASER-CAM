@@ -129,12 +129,13 @@ the settings file it is made from.
 | `s_max` | 1000 | the spindle value that is full power for the controller (`$30` of GRBL), from 1 to 100000 |
 | `overscan_mm` | 2 | the run past the end of a hatch line, from 0 to 50 |
 | `rapid_mm_min` | 6000 | the speed of the moves with the laser off, only to estimate the time |
+| `laser_watts` | 0 | the optical power of the laser at full power, in watts, from 0 to 1000; 0 means it is not known and `layers` then prints no energy |
 | `origin_x`, `origin_y` | 0 | where the lower left corner of the work goes |
 | `focus_z_mm` | 0 | where the focus (Z) is for the first pass |
 | `bed_x_mm`, `bed_y_mm` | 0 | the size of the bed; 0 for both means it is not known; the work may not go outside of it |
 | `max_passes` | 50 | the most passes a layer may ask for, up to 1000 |
 
-The keys of `[machine]` are `s_max`, `overscan_mm`, `rapid_mm_min`, `origin_x`, `origin_y`, `focus_z_mm`, `bed_x_mm`, `bed_y_mm` and `max_passes`.
+The keys of `[machine]` are `s_max`, `overscan_mm`, `rapid_mm_min`, `laser_watts`, `origin_x`, `origin_y`, `focus_z_mm`, `bed_x_mm`, `bed_y_mm` and `max_passes`.
 
 ### `[defaults]` and `[layer NAME]`
 
